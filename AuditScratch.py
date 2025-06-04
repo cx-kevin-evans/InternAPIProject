@@ -1,5 +1,17 @@
 import requests
+import argparse
+    # Parse and handle various CLI flags
+parser = argparse.ArgumentParser(description='Export a CxOne scan workflow as a CSV file')
+parser.add_argument('--region', required=True, help='Region for the API endpoint (e.g., us, eu)')
+parser.add_argument('--tenant_name', required=True, help='Tenant name')
+parser.add_argument('--api_key', required=True, help='API key for authentication')
 
+# Set up various global variables
+args = parser.parse_args()
+region = args.region
+tenantName = args.tenant_name
+apiKey = args.api_key
+ 
 # Custom script variables
 region = "us"
 tenantName = "evanskevin-sedemo"
