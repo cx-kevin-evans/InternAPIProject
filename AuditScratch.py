@@ -23,16 +23,14 @@ accessToken = data["access_token"]
 
 # print(accessToken)
 
-
 # Audit trail script portion:
 # Set your variables
-audit_url = "https://" + region + ".ast.checkmarx.net/api/audit"  
-
+audit_url = "https://" + region + ".ast.checkmarx.net/api/audit/"  
+print(audit_url)
 headers = {
     'Authorization': f'Bearer {accessToken}',
     'Accept': 'application/json'
 }
-print("check")
 # Make the GET request
 try:
     response = requests.get(audit_url, headers=headers)
