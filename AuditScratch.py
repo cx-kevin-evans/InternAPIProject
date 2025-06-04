@@ -18,3 +18,21 @@ response = requests.request("POST", url, headers=headers, data=payload)
 
 print(response.text)
 
+data = response.json()
+accessToken = data[] 
+
+
+# Audit trail script portion:
+# Set your variables
+# unique_url = "https://" + region + "ast.checkmarx.net/api/audit"  
+
+# headers = {
+#     'Authorization': f'Bearer {accessToken}',
+#     'Accept': 'application/json'
+# }
+
+# response = requests.get(unique_url, headers=headers)
+
+# print(response.status_code)
+# print(response.text)
+
