@@ -21,20 +21,29 @@ response = requests.request("POST", url, headers=headers, data=payload)
 data = response.json()
 accessToken = data["access_token"]
 
-print(accessToken)
+# print(accessToken)
 
 
 # Audit trail script portion:
 # Set your variables
-# unique_url = "https://" + region + "ast.checkmarx.net/api/audit"  
+audit_url = "https://" + region + ".ast.checkmarx.net/api/audit"  
 
-# headers = {
-#     'Authorization': f'Bearer {accessToken}',
-#     'Accept': 'application/json'
-# }
-
-# response = requests.get(unique_url, headers=headers)
-
-# print(response.status_code)
-# print(response.text)
+headers = {
+    'Authorization': f'Bearer {accessToken}',
+    'Accept': 'application/json'
+}
+print("check")
+# Make the GET request
+try:
+    response = requests.get(audit_url, headers=headers)
+    print("Audit API response:", response.json())
+    # Check for status 200
+    if response.status_code == 200:
+        print("Audit trail status is 200")
+    else:
+        print(f"Unexpected status: {response.status_code}")
+except requests.RequestException as err:
+    print("Request error:", err)
+except Exception as e:
+    print("Error parsing response:", e)
 
