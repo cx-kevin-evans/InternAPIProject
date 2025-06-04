@@ -16,10 +16,12 @@ headers = {
 
 response = requests.request("POST", url, headers=headers, data=payload)
 
-print(response.text)
+# print(response.text)
 
 data = response.json()
-accessToken = data[] 
+accessToken = data["access_token"]
+
+print(accessToken)
 
 
 # Audit trail script portion:
