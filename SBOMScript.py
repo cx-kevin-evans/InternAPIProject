@@ -38,6 +38,12 @@ headers = {
     'Authorization': f'Bearer {accessToken}',
     'Accept': 'application/json'
 }
-response = requests.get(new_url, headers=headers)  # Use GET for file formats
+export_body = {
+    "format": "SBOM",  # This is the key for SBOM export
+    "hideDevAndTestDependencies": True,    # or False, as you need
+    "showOnlyEffectiveLicenses": False     # or True, as you need
+}
+
+response = requests.get(new_url, headers=headers, json = export_body)  # Use GET for file formats
 print(response.status_code)
 print(response.text)
