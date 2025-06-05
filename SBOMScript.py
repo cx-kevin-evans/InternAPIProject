@@ -44,6 +44,6 @@ export_body = {
     "showOnlyEffectiveLicenses": False     # or True, as you need
 }
 
-response = requests.get(new_url, headers=headers, json = export_body)  # Use GET for file formats
+response = requests.get(new_url, headers=headers)  # Use GET for file formats
 print(response.status_code)
 print(response.text)
