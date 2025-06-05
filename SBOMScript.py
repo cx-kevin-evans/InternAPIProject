@@ -22,9 +22,23 @@ headers = {   'Content-Type': 'application/x-www-form-urlencoded'
 
 response = requests.request("POST", url, headers=headers, data=payload)
 
-# print(response.text)
-
 data = response.json()
 accessToken = data["access_token"]
 
 print(accessToken)
+
+audit_url = "https://" + region + ".ast.checkmarx.net/api/sca/export/file-formats"  
+headers = {
+    'Authorization': f'Bearer {accessToken}',
+    'Accept': 'application/json'
+}
+data = {
+    "format": "SBOM",
+    "hideDevAndTestDependencies": True,   # or False as needed
+    "showOnlyEffectiveLicenses": False    # or True as needed
+}
+
+response = requests.post(url, headers=headers, json=data)
+print(response.status_code)
+print(response.text)
+
