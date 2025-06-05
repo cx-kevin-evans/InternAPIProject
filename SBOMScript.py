@@ -30,6 +30,7 @@ headers = {
 }
 export_body = {
     "fileFormat": args.format,
+    "scanId": "e1db3f80-73fc-4e94-a5f0-634cbbfa9f55",  # Replace with your actual scan ID
     # Add other parameters as needed, e.g., scanId, projectId, etc.
 }
 response = requests.post(export_url, headers=headers, json=export_body)
