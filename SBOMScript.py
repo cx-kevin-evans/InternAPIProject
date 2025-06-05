@@ -27,7 +27,7 @@ accessToken = data["access_token"]
 
 print(accessToken)
 
-audit_url = "https://" + region + ".ast.checkmarx.net/api/sca/export/file-formats"  
+new_url = "https://" + region + ".ast.checkmarx.net/api/sca/export/file-formats"  
 headers = {
     'Authorization': f'Bearer {accessToken}',
     'Accept': 'application/json'
