@@ -32,12 +32,12 @@ headers = {
     'Accept': 'application/json',
     'Content-Type': 'application/json'
 }
-export_body = {
-    "format": "SBOM",  # This is the key for SBOM export
-    "hideDevAndTestDependencies": True,    # or False, as you need
-    "showOnlyEffectiveLicenses": False     # or True, as you need
-}
+# export_body = {
+#     "format": "SBOM",  # This is the key for SBOM export
+#     "hideDevAndTestDependencies": True,    # or False, as you need
+#     "showOnlyEffectiveLicenses": False     # or True, as you need
+# }
 
-response = requests.post(export_url, headers=headers, json=export_body)
+response = requests.post(export_url, headers=headers)
 print(response.status_code)
 print(response.text)
