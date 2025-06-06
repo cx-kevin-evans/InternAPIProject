@@ -65,7 +65,13 @@ for link in audit_data.get("links", []):
     if log_url:
         log_response = requests.get(log_url, headers=headers)
         log_response.raise_for_status()
-        day_events = log_response.json().get("events", [])
+        log_json = log_response.json()
+        if isinstance(log_json, list):
+            day_events = log_json
+        elif isinstance(log_json, dict) and "events" in log_json:
+            day_events = log_json["events"]
+        else:
+            day_events = []
         for event in day_events:
             if event.get("actionType", "").lower() == "login":
                 login_events.append([event.get("eventDate"), event.get("actionUserId")])
