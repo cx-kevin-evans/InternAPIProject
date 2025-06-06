@@ -1,6 +1,6 @@
 import requests
 import argparse
-
+import csv
 # Obtain command line arguments
 parser = argparse.ArgumentParser(description='Export a CxOne scan workflow as a CSV file')
 parser.add_argument('--region', required=True, help='Region for the API endpoint (e.g., us, eu)')
