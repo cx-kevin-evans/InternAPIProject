@@ -6,6 +6,7 @@ parser = argparse.ArgumentParser(description='Export a CxOne scan workflow as a 
 parser.add_argument('--region', required=True, help='Region for the API endpoint (e.g., us, eu)')
 parser.add_argument('--tenant_name', required=True, help='Tenant name')
 parser.add_argument('--api_key', required=True, help='API key for authentication')
+parser.add_argument('--output', default='logins.csv', help='Output CSV file')
 
 # Set up various global variables
 args = parser.parse_args()
