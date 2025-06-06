@@ -7,7 +7,7 @@ parser = argparse.ArgumentParser(description='Export CxOne login events as a CSV
 parser.add_argument('--region', required=True, help='Region for the API endpoint (e.g., us, eu)')
 parser.add_argument('--tenant_name', required=True, help='Tenant name')
 parser.add_argument('--api_key', required=True, help='API key for authentication')
-parser.add_argument('--output', default='logins.csv', help='Output CSV file')
+parser.add_argument('--output', default='audit_trail_export.csv', help='Output CSV file')  # <-- Changed here
 
 args = parser.parse_args()
 region = args.region
@@ -47,7 +47,6 @@ except Exception as e:
 login_events = []
 
 def extract_username(event):
-    # Safely extract username from event["data"]["userName"], if present
     data = event.get("data", {})
     if isinstance(data, dict):
         return data.get("userName")
