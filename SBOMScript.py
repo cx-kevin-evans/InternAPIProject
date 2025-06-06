@@ -28,7 +28,10 @@ headers = {   'Content-Type': 'application/x-www-form-urlencoded'
 response = requests.request("POST", url, headers=headers, data=payload)
 
 data = response.json()
-accessToken = data["access_token"]
+if ("access_token" not in response.text):
+    print(response.text)
+else:
+    accessToken = data["access_token"]
 
 # print(accessToken) 
 
@@ -57,6 +60,29 @@ response = requests.request("POST", url, json=payload, headers=headers)
 print(response.text)
 data = response.json()
 exportId = data["exportId"]
+
+# make the request to check the report status
+params = {
+    "exportId": exportId
+}
+
+response = requests.request("GET", url, params=params, headers=headers)
+print(response.text)
+data = response.json()
+url = data["fileUrl"]
+filename = url.split("/")[-2]  # Automatically extract filename from URL
+
+response = requests.request("GET", url, headers=headers)
+
+if response.status_code == 200:
+    with open(filename, "wb") as f:
+        f.write(response.content)
+    print(f"Downloaded file: {filename}")
+else:
+    print(f"Failed to download file. Status code: {response.status_code}")
+
+
+
 
 
 
