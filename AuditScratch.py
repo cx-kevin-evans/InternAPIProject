@@ -39,7 +39,7 @@ headers = {
 # Make the GET request
 try:
     response = requests.get(audit_url, headers=headers)
-    print("Audit API response:", response.json()["events"])
+    audit_data = response.json()
     
     # Check for status 200
     if response.status_code == 200:
@@ -51,3 +51,29 @@ except requests.RequestException as err:
 except Exception as e:
     print("Error parsing response:", e)
 
+login_events = []
+
+# 3. Process today's events
+for event in audit_data.get("events", []):
+    # Adjust the filter below to match your API's login event fields
+    if event.get("actionType", "").lower() == "login":
+        login_events.append([event.get("eventDate"), event.get("actionUserId")])
+
+# 4. Process previous days' events from links
+for link in audit_data.get("links", []):
+    log_url = link.get("url")
+    if log_url:
+        log_response = requests.get(log_url, headers=headers)
+        log_response.raise_for_status()
+        day_events = log_response.json().get("events", [])
+        for event in day_events:
+            if event.get("actionType", "").lower() == "login":
+                login_events.append([event.get("eventDate"), event.get("actionUserId")])
+
+# 5. Write to CSV
+with open(args.output, "w", newline="") as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(["eventDate", "actionUserId"])
+    writer.writerows(login_events)
+
+print(f"Exported {len(login_events)} login events to {args.output}")
