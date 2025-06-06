@@ -39,7 +39,7 @@ headers = {
 # Make the GET request
 try:
     response = requests.get(audit_url, headers=headers)
-    print("Audit API response:", response.json()["dates"])
+    print("Audit API response:", response.json()["eventDate"])
     
     # Check for status 200
     if response.status_code == 200:
