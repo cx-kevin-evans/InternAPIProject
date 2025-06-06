@@ -1,19 +1,40 @@
 import requests
 import argparse
 import csv
+from datetime import datetime
+
+def format_event_date(dt_str):
+    """
+    Converts ISO 8601 timestamp with nanoseconds (e.g. 2025-06-06T00:30:12.657635826Z)
+    to formatted string MM/DD/YYYY HH:MM (24-hour).
+    """
+    if not dt_str:
+        return ""
+    if '.' in dt_str:
+        base, frac = dt_str.split('.')
+        frac = frac.rstrip('Z')[:6]  # microseconds only (Python supports up to 6 digits)
+        dt_str_fixed = f"{base}.{frac}Z"
+    else:
+        dt_str_fixed = dt_str
+    dt = datetime.strptime(dt_str_fixed, "%Y-%m-%dT%H:%M:%S.%fZ")
+    return dt.strftime("%m/%d/%Y %H:%M")
 
 def flatten_event(event):
     """
     Flattens the event and its 'data' sub-dictionary for CSV output.
     Maps 'data.id' -> 'details_id', 'data.status' -> 'details_status', etc.
+    Also formats date fields as requested.
     """
     flat = {}
-    # Top-level fields
-    flat["EventDate"] = event.get("eventDate")
+    # Format and flatten date fields
+    flat["EventDate"] = format_event_date(event.get("eventDate"))
     flat["actionType"] = event.get("actionType")
     flat["actionUserId"] = event.get("actionUserId")
     flat["auditResource"] = event.get("auditResource")
-    flat["eventDate"] = event.get("eventDate")  # duplicate for your requested columns
+    flat["details_id"] = None
+    flat["details_status"] = None
+    flat["details_username"] = None
+    flat["eventDate"] = format_event_date(event.get("eventDate"))  # duplicate column per your request
     flat["eventType"] = event.get("eventType")
     flat["ipAddress"] = event.get("ipAddress")
     # Nested 'data' fields
@@ -22,10 +43,6 @@ def flatten_event(event):
         flat["details_id"] = data.get("id")
         flat["details_status"] = data.get("status")
         flat["details_username"] = data.get("username")
-    else:
-        flat["details_id"] = None
-        flat["details_status"] = None
-        flat["details_username"] = None
     return flat
 
 def get_all_events(audit_data):
