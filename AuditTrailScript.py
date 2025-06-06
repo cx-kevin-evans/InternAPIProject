@@ -2,6 +2,7 @@ import requests
 import argparse
 import csv
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def format_event_date(dt_str):
     """
@@ -26,7 +27,6 @@ def flatten_event(event):
     Also formats date fields as requested.
     """
     flat = {}
-    # Format and flatten date fields
     flat["EventDate"] = format_event_date(event.get("eventDate"))
     flat["actionType"] = event.get("actionType")
     flat["actionUserId"] = event.get("actionUserId")
@@ -37,7 +37,6 @@ def flatten_event(event):
     flat["eventDate"] = format_event_date(event.get("eventDate"))  # duplicate column per your request
     flat["eventType"] = event.get("eventType")
     flat["ipAddress"] = event.get("ipAddress")
-    # Nested 'data' fields
     data = event.get("data", {})
     if isinstance(data, dict):
         flat["details_id"] = data.get("id")
@@ -51,14 +50,14 @@ def get_all_events(audit_data):
     """
     return [flatten_event(e) for e in audit_data.get("events", [])]
 
-def get_all_events_from_links(links, headers):
+def fetch_and_flatten_events(link, headers):
     """
-    Downloads and returns all events (flattened) from previous days' logs.
+    Worker function for multithreaded fetching and flattening of events from a single link.
     """
+    log_url = link.get("url")
     events = []
-    for link in links:
-        log_url = link.get("url")
-        if log_url:
+    if log_url:
+        try:
             log_response = requests.get(log_url, headers=headers)
             log_response.raise_for_status()
             log_json = log_response.json()
@@ -68,8 +67,21 @@ def get_all_events_from_links(links, headers):
                 day_events = log_json["events"]
             else:
                 day_events = []
-            events.extend([flatten_event(e) for e in day_events])
+            events = [flatten_event(e) for e in day_events]
+        except Exception as e:
+            print(f"Error fetching {log_url}: {e}")
     return events
+
+def get_all_events_from_links_multithreaded(links, headers, max_workers=8):
+    """
+    Downloads and returns all events (flattened) from previous days' logs using multithreading.
+    """
+    all_events = []
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = [executor.submit(fetch_and_flatten_events, link, headers) for link in links]
+        for future in as_completed(futures):
+            all_events.extend(future.result())
+    return all_events
 
 def write_events_to_csv(events, output_file):
     """
@@ -134,9 +146,9 @@ def main():
         print("Error parsing response:", e)
         exit(1)
 
-    # Gather all events (today + previous days)
+    # Gather all events (today + previous days, with multithreading for links)
     all_events = get_all_events(audit_data)
-    all_events += get_all_events_from_links(audit_data.get("links", []), headers)
+    all_events += get_all_events_from_links_multithreaded(audit_data.get("links", []), headers)
 
     # Write to CSV
     write_events_to_csv(all_events, args.output)
