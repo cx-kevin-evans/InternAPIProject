@@ -24,7 +24,7 @@ def flatten_event(event):
     """
     Flattens the event and its 'data' sub-dictionary for CSV output.
     Maps 'data.id' -> 'details_id', 'data.status' -> 'details_status', etc.
-    Also formats date fields as requested.
+    Also formats date fields.
     """
     flat = {}
     flat["EventDate"] = format_event_date(event.get("eventDate"))
@@ -34,7 +34,6 @@ def flatten_event(event):
     flat["details_id"] = None
     flat["details_status"] = None
     flat["details_username"] = None
-    flat["eventDate"] = format_event_date(event.get("eventDate"))  # duplicate column per your request
     flat["eventType"] = event.get("eventType")
     flat["ipAddress"] = event.get("ipAddress")
     data = event.get("data", {})
@@ -95,7 +94,6 @@ def write_events_to_csv(events, output_file):
         "details_id",
         "details_status",
         "details_username",
-        "eventDate",
         "eventType",
         "ipAddress"
     ]
