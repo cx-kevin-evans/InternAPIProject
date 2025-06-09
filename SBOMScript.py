@@ -82,47 +82,49 @@ def check_report_status(exportId, accessToken, region, maxRetries, baseDelay):
     print("Max retries reached. Could not check report status.")
     return False
 
-def download_sbom_report(response):
-    # start new download method
-    data = response.json()
-    url = data["fileUrl"]
-    filename = url.split("/")[-2]  # Automatically extract filename from URL
+def download_sbom_report(exportId, accessToken, max_attempts=10):
+    status_url = "https://us.ast.checkmarx.net/api/sca/export/requests"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "text/plain, application/json, text/json",
+        "Authorization": f'Bearer {accessToken}'
+    }
+    params = {"exportId": exportId}
+    wait_time = 2  # seconds
 
-    if response.status_code == 200:
-        with open(filename, "wb") as f:
-            f.write(response.content)
-        print(f"Downloaded file: {filename}")
-    else:
-        print(f"Failed to download file. Status code: {response.status_code}")
+    for attempt in range(max_attempts):
+        response = requests.get(status_url, params=params, headers=headers)
+        print(response.text)
+        if response.status_code != 200:
+            print(f"Failed to check report status: {response.text}")
+            time.sleep(wait_time)
+            wait_time = min(wait_time * 2, 60)  # exponential backoff, max 60s
+            continue
 
-    
+        data = response.json()
+        status = data.get("status")
+        file_url = data.get("fileUrl")
 
-def main():
-    # Obtain command line arguments
-    parser = argparse.ArgumentParser(description='Export a CxOne scan workflow as a CSV file')
-    parser.add_argument('--region', required=True, help='Region for the API endpoint (e.g., us, eu)')
-    parser.add_argument('--tenant_name', required=True, help='Tenant name')
-    parser.add_argument('--api_key', required=True, help='API key for authentication')
-    parser.add_argument('--scan_id', required=True, help='Scan ID for the report')
-    parser.add_argument('--format', required=True, help='File format of the SBOM report (e.g., CycloneDxJson, SpdxJson, or CycloneDxXml)')
+        if status == "Completed" and file_url:
+            filename = file_url.split("/")[-2]  # Or use another method to name file
+            file_response = requests.get(file_url)
+            if file_response.status_code == 200:
+                with open(filename, "wb") as f:
+                    f.write(file_response.content)
+                print(f"Downloaded file: {filename}")
+                return
+            else:
+                print(f"Failed to download file from fileUrl: {file_response.status_code}")
+                return
+        elif status in ("Failed", "Error"):
+            print(f"Report generation failed: {data}")
+            return
+        else:
+            print(f"Report not ready yet (status: {status}). Waiting {wait_time}s...")
+            time.sleep(wait_time)
+            wait_time = min(wait_time * 2, 60)  # exponential backoff
 
-
-    # Set up various global variables
-    args = parser.parse_args()
-    region = args.region
-    tenantName = args.tenant_name
-    apiKey = args.api_key
-    scanId = args.scan_id
-    fileFormat = args.format
-
-    accessToken = get_access_token(region, tenantName, apiKey)
-    exportId = generate_sbom_report(scanId, fileFormat, accessToken, region)
-    data = check_report_status(exportId, accessToken, region, 5, 1)
-    if data:
-        download_sbom_report(data)
-    else:
-        print("Failed to retrieve the report status and download the report.")
-    
+    print("Failed to retrieve report status and download report after many attempts.")
     
 
 
