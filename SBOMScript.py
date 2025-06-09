@@ -126,6 +126,32 @@ def download_sbom_report(exportId, accessToken, max_attempts=10):
 
     print("Failed to retrieve report status and download report after many attempts.")
     
+def main():
+    # Obtain command line arguments
+    parser = argparse.ArgumentParser(description='Export a CxOne scan workflow as a CSV file')
+    parser.add_argument('--region', required=True, help='Region for the API endpoint (e.g., us, eu)')
+    parser.add_argument('--tenant_name', required=True, help='Tenant name')
+    parser.add_argument('--api_key', required=True, help='API key for authentication')
+    parser.add_argument('--scan_id', required=True, help='Scan ID for the report')
+    parser.add_argument('--format', required=True, help='File format of the SBOM report (e.g., CycloneDxJson, SpdxJson, or CycloneDxXml)')
+
+
+    # Set up various global variables
+    args = parser.parse_args()
+    region = args.region
+    tenantName = args.tenant_name
+    apiKey = args.api_key
+    scanId = args.scan_id
+    fileFormat = args.format
+
+    accessToken = get_access_token(region, tenantName, apiKey)
+    exportId = generate_sbom_report(scanId, fileFormat, accessToken, region)
+    data = check_report_status(exportId, accessToken, region, 5, 1)
+    if data:
+        download_sbom_report(data)
+    else:
+        print("Failed to retrieve the report status and download the report.")
+    
 
 
 if __name__ == "__main__":
