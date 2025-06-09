@@ -5,27 +5,30 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 def format_event_date(dt_str):
-    """
-    Converts ISO 8601 timestamp with nanoseconds (e.g. 2025-06-06T00:30:12.657635826Z)
-    to formatted string MM/DD/YYYY HH:MM (24-hour).
-    """
     if not dt_str:
         return ""
     if '.' in dt_str:
         base, frac = dt_str.split('.')
-        frac = frac.rstrip('Z')[:6]  # microseconds only (Python supports up to 6 digits)
+        frac = frac.rstrip('Z')[:6]
         dt_str_fixed = f"{base}.{frac}Z"
     else:
         dt_str_fixed = dt_str
     dt = datetime.strptime(dt_str_fixed, "%Y-%m-%dT%H:%M:%S.%fZ")
     return dt.strftime("%m/%d/%Y %H:%M")
 
+def parse_iso_event_date(dt_str):
+    """Parses ISO event date string to datetime object for filtering."""
+    if not dt_str:
+        return None
+    if '.' in dt_str:
+        base, frac = dt_str.split('.')
+        frac = frac.rstrip('Z')[:6]
+        dt_str_fixed = f"{base}.{frac}Z"
+    else:
+        dt_str_fixed = dt_str
+    return datetime.strptime(dt_str_fixed, "%Y-%m-%dT%H:%M:%S.%fZ")
+
 def flatten_event(event):
-    """
-    Flattens the event and its 'data' sub-dictionary for CSV output.
-    Maps 'data.id' -> 'details_id', 'data.status' -> 'details_status', etc.
-    Also formats date fields.
-    """
     flat = {}
     flat["EventDate"] = format_event_date(event.get("eventDate"))
     flat["actionType"] = event.get("actionType")
@@ -43,16 +46,25 @@ def flatten_event(event):
         flat["details_username"] = data.get("username")
     return flat
 
-def get_all_events(audit_data):
-    """
-    Returns all events (flattened) from the current day's audit data.
-    """
-    return [flatten_event(e) for e in audit_data.get("events", [])]
+def event_in_date_range(event, start_dt, end_dt):
+    """Returns True if event is within the date range (inclusive)."""
+    event_dt = parse_iso_event_date(event.get("eventDate"))
+    if event_dt is None:
+        return False
+    if start_dt and event_dt < start_dt:
+        return False
+    if end_dt and event_dt > end_dt:
+        return False
+    return True
 
-def fetch_and_flatten_events(link, headers):
-    """
-    Worker function for multithreaded fetching and flattening of events from a single link.
-    """
+def get_all_events(audit_data, start_dt=None, end_dt=None):
+    return [
+        flatten_event(e)
+        for e in audit_data.get("events", [])
+        if event_in_date_range(e, start_dt, end_dt)
+    ]
+
+def fetch_and_flatten_events(link, headers, start_dt=None, end_dt=None):
     log_url = link.get("url")
     events = []
     if log_url:
@@ -66,26 +78,26 @@ def fetch_and_flatten_events(link, headers):
                 day_events = log_json["events"]
             else:
                 day_events = []
-            events = [flatten_event(e) for e in day_events]
+            # Filter events by date range here
+            for e in day_events:
+                if event_in_date_range(e, start_dt, end_dt):
+                    events.append(flatten_event(e))
         except Exception as e:
             print(f"Error fetching {log_url}: {e}")
     return events
 
-def get_all_events_from_links_multithreaded(links, headers, max_workers=8):
-    """
-    Downloads and returns all events (flattened) from previous days' logs using multithreading.
-    """
+def get_all_events_from_links_multithreaded(links, headers, start_dt=None, end_dt=None, max_workers=8):
     all_events = []
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(fetch_and_flatten_events, link, headers) for link in links]
+        futures = [
+            executor.submit(fetch_and_flatten_events, link, headers, start_dt, end_dt)
+            for link in links
+        ]
         for future in as_completed(futures):
             all_events.extend(future.result())
     return all_events
 
 def write_events_to_csv(events, output_file):
-    """
-    Writes the selected fields from all events to a CSV file.
-    """
     fieldnames = [
         "EventDate",
         "actionType",
@@ -109,10 +121,20 @@ def main():
     parser.add_argument('--tenant_name', required=True, help='Tenant name')
     parser.add_argument('--api_key', required=True, help='API key for authentication')
     parser.add_argument('--output', default='audit_trail_export.csv', help='Output CSV file')
+    parser.add_argument('--start_date', help='Start date (YYYY-MM-DD), inclusive', required=False)
+    parser.add_argument('--end_date', help='End date (YYYY-MM-DD), inclusive', required=False)
     args = parser.parse_args()
     region = args.region
     tenantName = args.tenant_name
     apiKey = args.api_key
+
+    # Parse start and end dates if provided
+    start_dt = datetime.strptime(args.start_date, "%Y-%m-%d") if args.start_date else None
+    if start_dt:
+        start_dt = start_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+    end_dt = datetime.strptime(args.end_date, "%Y-%m-%d") if args.end_date else None
+    if end_dt:
+        end_dt = end_dt.replace(hour=23, minute=59, second=59, microsecond=999999)
 
     # Generate a new access token via the API key
     url = f"https://{region}.iam.checkmarx.net/auth/realms/{tenantName}/protocol/openid-connect/token"
@@ -145,8 +167,8 @@ def main():
         exit(1)
 
     # Gather all events (today + previous days, with multithreading for links)
-    all_events = get_all_events(audit_data)
-    all_events += get_all_events_from_links_multithreaded(audit_data.get("links", []), headers)
+    all_events = get_all_events(audit_data, start_dt, end_dt)
+    all_events += get_all_events_from_links_multithreaded(audit_data.get("links", []), headers, start_dt, end_dt)
 
     # Write to CSV
     write_events_to_csv(all_events, args.output)
