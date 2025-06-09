@@ -69,7 +69,7 @@ def check_report_status(exportId, accessToken, region, maxRetries, baseDelay):
                 return response
             
             print(f"Attempt {attempt + 1} failed with status {response.status_code}, retrying...")
-            print(f"Respose content: {response.text}")
+            print(f"Response content: {response.text}")
         
         except requests.RequestException as e:
             print(f"Attempt {attempt + 1} failed with error: {e}")
