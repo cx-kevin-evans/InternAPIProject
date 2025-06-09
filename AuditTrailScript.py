@@ -3,6 +3,8 @@ import argparse
 import csv
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from openpyxl import Workbook
+import os
 
 def format_event_date(dt_str):
     if not dt_str:
@@ -109,18 +111,53 @@ def write_events_to_csv(events, output_file):
         "eventType",
         "ipAddress"
     ]
+
+    # add on the .csv suffix
+    output_file = output_file + ".csv"
+
+    # write to CSV file
     with open(output_file, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for event in events:
             writer.writerow(event)
 
+def write_events_to_excel(events, output_file):
+    headers = [
+        "EventDate",
+        "actionType",
+        "actionUserId",
+        "auditResource",
+        "details_id",
+        "details_status",
+        "details_username",
+        "eventType",
+        "ipAddress"
+    ]
+
+    # initialize the workbook and worksheet
+    wb = Workbook()
+    ws = wb.active
+    ws.title = output_file
+
+    # write the data
+    ws.append(headers)
+    for event in events:
+        row = [event.get(h, "") for h in headers]
+        ws.append(row)
+    
+    # save file in current directory
+    current_dir = os.getcwd()
+    filename = output_file + ".xlsx"
+    filepath = os.path.join(current_dir, filename)
+    wb.save(filepath)
+
 def main():
     parser = argparse.ArgumentParser(description='Export CxOne audit events as a CSV file')
     parser.add_argument('--region', required=True, help='Region for the API endpoint (e.g., us, eu)')
     parser.add_argument('--tenant_name', required=True, help='Tenant name')
     parser.add_argument('--api_key', required=True, help='API key for authentication')
-    parser.add_argument('--output', default='audit_trail_export.csv', help='Output CSV file')
+    parser.add_argument('--output', default='audit_trail_export', help='Output file name')
     parser.add_argument('--start_date', help='Start date (YYYY-MM-DD), inclusive', required=False)
     parser.add_argument('--end_date', help='End date (YYYY-MM-DD), inclusive', required=False)
     args = parser.parse_args()
@@ -172,6 +209,7 @@ def main():
 
     # Write to CSV
     write_events_to_csv(all_events, args.output)
+    write_events_to_excel(all_events, args.output)
     print(f"Exported {len(all_events)} events to {args.output}")
 
 if __name__ == "__main__":
