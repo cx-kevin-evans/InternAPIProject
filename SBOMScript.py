@@ -1,5 +1,6 @@
 import requests
 import argparse
+import time
 
 def get_access_token(region, tenantName, apiKey):
     """
@@ -17,11 +18,11 @@ def get_access_token(region, tenantName, apiKey):
         
     return response.json().get("access_token")
 
-def generate_sbom_report(scanId, fileFormat, accessToken):
+def generate_sbom_report(scanId, fileFormat, accessToken, region):
     """
     Generates a Software Bill of Materials (SBOM) report for a given scan ID.
     """
-    url = "https://us.ast.checkmarx.net/api/sca/export/requests"
+    url = "https://" + region + ".ast.checkmarx.net/api/sca/export/requests"
     payload = {
         "scanId": scanId,
         "fileFormat": fileFormat,
@@ -43,13 +44,13 @@ def generate_sbom_report(scanId, fileFormat, accessToken):
     data = response.json().get("exportID")
     return data
 
-def download_sbom_report(exportId, accessToken):
+def check_report_status(exportId, accessToken, region, maxRetries, baseDelay):
     """
-    Downloads the SBOM report using the export ID.
+    Checks the status of the report using the export ID.
     """
     
     # make the request to check the report status
-    url = "https://us.ast.checkmarx.net/api/sca/export/requests"
+    url = "https://" + region + ".ast.checkmarx.net/api/sca/export/requests"
     params = {
         "exportId": exportId
     }
@@ -59,16 +60,32 @@ def download_sbom_report(exportId, accessToken):
         "Authorization": f'Bearer {accessToken}'
     }
 
-    response = requests.request("GET", url, params=params, headers=headers)
+    for attempt in range(maxRetries):
+        try:
+            response = requests.request("GET", url, params=params, headers=headers)
 
-    print(response.text)
-    if response.status_code != 200:
-        raise Exception(f"Failed to check report status: {response.text}")
+            if response.status_code == 200:
+                print("Successfully checked report status.")
+                return response
+            
+            print(f"Attempt {attempt + 1} failed with status {response.status_code}, retrying...")
+        
+        except requests.RequestException as e:
+            print(f"Attempt {attempt + 1} failed with error: {e}")
+        
+        #exponential backoff delay
+        sleepTime = baseDelay * (2 ** attempt)
+        print(f"Waiting {sleepTime} seconds before retrying...")
+        time.sleep(sleepTime)
+
+    print("Max retries reached. Could not check report status.")
+    return False
+
+def download_sbom_report(response):
+    # start new download method
     data = response.json()
     url = data["fileUrl"]
     filename = url.split("/")[-2]  # Automatically extract filename from URL
-
-    # response = requests.request("GET", url, headers=headers)
 
     if response.status_code == 200:
         with open(filename, "wb") as f:
@@ -78,9 +95,6 @@ def download_sbom_report(exportId, accessToken):
         print(f"Failed to download file. Status code: {response.status_code}")
 
     
-
-
-
 
 def main():
     # Obtain command line arguments
@@ -101,9 +115,14 @@ def main():
     fileFormat = args.format
 
     accessToken = get_access_token(region, tenantName, apiKey)
-    exportId = generate_sbom_report(scanId, fileFormat, accessToken)
-    download_sbom_report(exportId, accessToken)
-
+    exportId = generate_sbom_report(scanId, fileFormat, accessToken, region)
+    data = check_report_status(exportId, accessToken, region, 5, 1)
+    if data:
+        download_sbom_report(data)
+    else:
+        print("Failed to retrieve the report status and download the report.")
+    
+    
 
 
 if __name__ == "__main__":
