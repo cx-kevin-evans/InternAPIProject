@@ -1,0 +1,83 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:b8794a5e-f587-42ac-bf0d-ea6e6917cf43",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2025-06-10T16:23:12Z",
+    "tools": {
+      "services": [
+        {
+          "provider": {
+            "name": "Checkmarx",
+            "url": [
+              "https://checkmarx.com/"
+            ],
+            "bom-ref": "Checkmarx"
+          },
+          "name": "Checkmarx SCA"
+        }
+      ]
+    },
+    "component": {
+      "type": "data",
+      "bom-ref": "b8794a5e-f587-42ac-bf0d-ea6e6917cf43",
+      "name": "Scan b8794a5e-f587-42ac-bf0d-ea6e6917cf43",
+      "properties": [
+        {
+          "name": "ScanDate",
+          "value": "2025-06-10T16:19:15Z"
+        }
+      ]
+    },
+    "properties": [
+      {
+        "name": "ProjectName",
+        "value": "CxKevinE/Exercises"
+      }
+    ]
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "pkg:nuget/Microsoft.CodeDom.Providers.DotNetCompilerPlatform@1.0.3",
+      "supplier": {
+        "name": "Nuget"
+      },
+      "publisher": "Microsoft",
+      "name": "Microsoft.CodeDom.Providers.DotNetCompilerPlatform",
+      "version": "1.0.3",
+      "description": "Replacement CodeDOM providers that use the new .NET Compiler Platform (\u0022Roslyn\u0022) compiler as a service APIs. This provides support for new language features in systems using CodeDOM (e.g. ASP.NET runtime compilation) as well as improving the compilation performance of these systems.",
+      "hashes": [
+        {
+          "alg": "SHA-1",
+          "content": "b9ff8f000d818d0d3005e95a18b43f2f62adf9fe"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Microsoft .NET Library"
+        }
+      ],
+      "purl": "pkg:nuget/Microsoft.CodeDom.Providers.DotNetCompilerPlatform@1.0.3",
+      "externalReferences": [
+        {
+          "url": "http://www.asp.net/",
+          "type": "vcs"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "b8794a5e-f587-42ac-bf0d-ea6e6917cf43",
+      "dependsOn": [
+        "pkg:nuget/Microsoft.CodeDom.Providers.DotNetCompilerPlatform@1.0.3"
+      ]
+    },
+    {
+      "ref": "pkg:nuget/Microsoft.CodeDom.Providers.DotNetCompilerPlatform@1.0.3"
+    }
+  ],
+  "vulnerabilities": []
+}

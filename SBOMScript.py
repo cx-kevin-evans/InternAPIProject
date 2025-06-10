@@ -6,7 +6,10 @@ def get_access_token(region, tenantName, apiKey):
     """
     Generates an access token using the provided API key.
     """
-    url = "https://" + region + ".iam.checkmarx.net/auth/realms/" + tenantName + "/protocol/openid-connect/token"
+    if region == "":
+        url = "https://iam.checkmarx.net/auth/realms/" + tenantName + "/protocol/openid-connect/token"
+    else:
+        url = "https://" + region + ".iam.checkmarx.net/auth/realms/" + tenantName + "/protocol/openid-connect/token"
     payload = 'grant_type=refresh_token&client_id=ast-app&refresh_token=' + apiKey 
     headers = {   'Content-Type': 'application/x-www-form-urlencoded'
     }
@@ -22,7 +25,10 @@ def generate_sbom_report(scanId, fileFormat, accessToken, region):
     """
     Generates a Software Bill of Materials (SBOM) report for a given scan ID.
     """
-    url = "https://" + region + ".ast.checkmarx.net/api/sca/export/requests"
+    if region == "":
+        url = "https://ast.checkmarx.net/api/sca/export/requests"
+    else:
+        url = "https://" + region + ".ast.checkmarx.net/api/sca/export/requests"
     payload = {
         "scanId": scanId,
         "fileFormat": fileFormat,
@@ -40,8 +46,7 @@ def generate_sbom_report(scanId, fileFormat, accessToken, region):
     response = requests.request("POST", url, json=payload, headers=headers) 
 
     # save the export id from the response
-    print(response.text)
-    data = response.json().get("exportID")
+    data = response.json().get("exportId")
     return data
 
 def check_report_status(exportId, accessToken, region, maxRetries, baseDelay):
@@ -50,7 +55,10 @@ def check_report_status(exportId, accessToken, region, maxRetries, baseDelay):
     """
     
     # make the request to check the report status
-    url = "https://" + region + ".ast.checkmarx.net/api/sca/export/requests"
+    if region == "":
+        url = "https://ast.checkmarx.net/api/sca/export/requests"
+    else:
+        url = "https://" + region + ".ast.checkmarx.net/api/sca/export/requests"
     params = {
         "exportId": exportId
     }
@@ -82,8 +90,11 @@ def check_report_status(exportId, accessToken, region, maxRetries, baseDelay):
     print("Max retries reached. Could not check report status.")
     return False
 
-def download_sbom_report(exportId, accessToken, max_attempts=10):
-    status_url = "https://us.ast.checkmarx.net/api/sca/export/requests"
+def download_sbom_report(exportId, accessToken, region, max_attempts=10):
+    if region == "":
+        status_url = "https://ast.checkmarx.net/api/sca/export/requests"
+    else:
+        status_url = "https://" + region + ".ast.checkmarx.net/api/sca/export/requests"
     headers = {
         "Content-Type": "application/json",
         "Accept": "text/plain, application/json, text/json",
@@ -101,13 +112,14 @@ def download_sbom_report(exportId, accessToken, max_attempts=10):
             wait_time = min(wait_time * 2, 60)  # exponential backoff, max 60s
             continue
 
+
         data = response.json()
-        status = data.get("status")
+        status = data.get("exportStatus")
         file_url = data.get("fileUrl")
 
         if status == "Completed" and file_url:
             filename = file_url.split("/")[-2]  # Or use another method to name file
-            file_response = requests.get(file_url)
+            file_response = requests.request("GET", file_url, headers=headers)
             if file_response.status_code == 200:
                 with open(filename, "wb") as f:
                     f.write(file_response.content)
@@ -146,12 +158,17 @@ def main():
 
     accessToken = get_access_token(region, tenantName, apiKey)
     exportId = generate_sbom_report(scanId, fileFormat, accessToken, region)
-    data = check_report_status(exportId, accessToken, region, 5, 1)
-    if data:
-        download_sbom_report(data)
+    check_report_status(exportId, accessToken, region, 5, 1)
+    # if data:
+    #     download_sbom_report(data, accessToken, region, 10)
+    # else:
+    #     print("Failed to retrieve the report status and download the report.")
+    if exportId:
+        download_sbom_report(exportId, accessToken, region, 10)
     else:
-        print("Failed to retrieve the report status and download the report.")
-    
+        print("Failed to create export report.")
+
+
 
 
 if __name__ == "__main__":
