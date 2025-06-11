@@ -85,6 +85,7 @@ def determine_scan_parameters(project):
     origin = project.get("origin")
     repo_url = project.get("repoUrl")
     main_branch = project.get("mainBranch")
+    print(repo_url, main_branch, origin)
     if origin and repo_url and main_branch:
         scan_type = "git"
         handler = {
