@@ -109,7 +109,9 @@ def main():
 
     accessToken = get_access_token(region, tenantName, apiKey)
     projects = retrieve_projects(region, accessToken)
+    print(projects)
     project = randomize(projects)
+    print(project)
     scan_type, handler = determine_scan_parameters(project)
 
     if scan_type == "git":
