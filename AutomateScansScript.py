@@ -48,15 +48,14 @@ def get_project_config_params(region, access_token, project_id):
 def extract_repo_info_from_params(params):
     repo_url = None
     main_branch = None
-    config_data = params.get("config", [])
     repo_url = next(
-        (item['value'] for item in config_data if item['key'] == 'scan.handler.git.repository'),
-        None
-    )
+    (item["value"] for item in params if item["key"] == "scan.handler.git.repository"),
+    None
+)
     main_branch = next(
-        (item['value'] for item in config_data if item['key'] == 'scan.handler.git.branch'),
-        None
-    )
+    (item["value"] for item in params if item["key"] == "scan.handler.git.branch"),
+    None
+)
     return repo_url, main_branch
 
 def run_scan(region, access_token, project_id, scan_type="git", handler=None, tags=None, config=None):
