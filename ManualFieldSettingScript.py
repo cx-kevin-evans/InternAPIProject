@@ -32,9 +32,14 @@ def get_user_action():
     return action
 
 def update_fields(accessToken, region):
+    """
+    Updates fields in an existing project based on user input.
+    """
+
     # fetch project ID + update fields
     projectId = input("Please provide the project ID. ")
     print("Now please provide the data for the fields you want to update.")
+    print("WARNING: This will overwrite existing project tags and groups.")
     projectName = input("Project Name: ")
     repoUrl = input("Repository URL: ")
     mainBranch = input("Main Branch: ")
@@ -57,7 +62,19 @@ def update_fields(accessToken, region):
         "mainBranch": mainBranch
     }
 
-def create_project():
+    # make the request to update the project
+    response = requests.request("PUT", url, headers=headers, json=payload)
+    if response.status_code != 204:
+        print(f"Failed to update project: {response.text}")
+        print(f"Response status code: {response.status_code}")
+    else:
+        print(f"Project {projectName} updated successfully with ID: {projectId}")
+        print("You can now run a scan on this project.")
+
+def create_project(accessToken, region):
+    """
+    Creates a new project based on user input.
+    """
     print("not implemented yet")
 
 def main():
@@ -79,7 +96,7 @@ def main():
     if action == "update":
         update_fields(accessToken, region)
     elif action == "create":
-        create_project()
+        create_project(accessToken, region)
 
 
 if __name__ == "__main__":
