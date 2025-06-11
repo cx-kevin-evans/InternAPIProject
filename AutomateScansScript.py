@@ -1,5 +1,6 @@
 import requests
 import argparse
+import random
 
 def get_access_token(region, tenantName, apiKey):
     """
@@ -54,6 +55,97 @@ def retrieve_projects(region, accessToken):
     projects = response.json().get("projects")
     return projects
 
+def run_scan(
+    region,
+    access_token,
+    project_id,
+    scan_type="upload",
+    handler=None,
+    tags=None,
+    config=None
+):
+    """
+    Runs a scan on a Checkmarx AST project.
+
+    Parameters:
+        region (str): API region (e.g., 'us', 'eu', or '')
+        access_token (str): JWT access token
+        project_id (str): Project UUID
+        scan_type (str): 'upload' or 'git'
+        handler (dict): Handler info (for upload/git)
+        tags (dict): Scan tags
+        config (list): List of scan config dicts
+    """
+    if region == "":
+        url = "https://ast.checkmarx.net/api/scans/"
+    else:
+        url = f"https://{region}.ast.checkmarx.net/api/scans/"
+
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Accept': '*/*; version=1.0',
+        'Content-Type': 'application/json'
+    }
+
+    if handler is None:
+        handler = {}
+    if tags is None:
+        tags = {"ScanTag01": "", "ScanSeverity": "high"}
+    if config is None:
+        config = [
+            {
+                "type": "sast",
+                "value": {
+                    "incremental": "false",
+                    "presetName": "Checkmarx Default",
+                    "engineVerbose": "false"
+                }
+            },
+            {
+                "type": "sca",
+                "value": {
+                    "lastSastScanTime": "",
+                    "exploitablePath": "false"
+                }
+            }
+        ]
+
+    scan_payload = {
+        "project": {"id": project_id},
+        "type": scan_type,
+        "handler": handler,
+        "tags": tags,
+        "config": config
+    }
+
+    print("DEBUG: Scan payload:", scan_payload)
+    response = requests.post(url, json=scan_payload, headers=headers)
+    if response.status_code not in (200, 201):
+        raise Exception(f"Failed to start scan: {response.status_code} {response.text}")
+    return response.json()
+
+def determine_scan_parameters(project):
+    """
+    Determines the scan_type and handler for a given project.
+    Returns (scan_type, handler)
+    """
+    origin = project.get("origin")
+    repo_url = project.get("repoUrl")
+    main_branch = project.get("mainBranch")
+
+    if origin and repo_url and main_branch:
+        # Git-based project
+        scan_type = "git"
+        handler = {
+            "repoUrl": repo_url,
+            "branch": main_branch
+            # Optionally: "credentials": {...}
+        }
+    else:
+        # Default to upload (manual/migrated project)
+        scan_type = "upload"
+        handler = {}  # For upload, you need to provide an uploadurl if you want to scan new code
+    return scan_type, handler
 
 def main():
     # Obtain command line arguments
@@ -71,11 +163,10 @@ def main():
 
     accessToken = get_access_token(region, tenantName, apiKey)
     list = retrieve_projects(region, accessToken)
-    randomize(list)
-
-
-
-
+    project = randomize(list)
+    scan_type, handler = determine_scan_parameters(project)
+    scan_result = run_scan(region, accessToken, project["id"], scan_type=scan_type, handler=handler)
+    print(scan_result)
 
 if __name__ == "__main__":
     main()
