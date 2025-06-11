@@ -44,6 +44,30 @@ def get_project_configuration(region, access_token, project_id):
         raise Exception(f"Failed to get project configuration for {project_id}: {response.status_code} {response.text}")
     return response.json()
 
+def extract_repo_info(config):
+    """
+    Extract repo URL and branch from the config object.
+    Adjust this function if your config structure is different.
+    """
+    repo_url = None
+    main_branch = None
+
+    # Try common locations for repo info
+    if not config:
+        return None, None
+
+    # Most common (2024/2025): sourceSettings
+    if "sourceSettings" in config:
+        repo_url = config["sourceSettings"].get("repositoryUrl")
+        main_branch = config["sourceSettings"].get("branch")
+    # Alternate (older): sourceRepository
+    elif "sourceRepository" in config:
+        repo_url = config["sourceRepository"].get("url")
+        main_branch = config["sourceRepository"].get("branch")
+    # If you find a different structure, add more logic here
+
+    return repo_url, main_branch
+
 def run_scan(region, access_token, project_id, scan_type, handler=None, tags=None, config=None):
     if region == "":
         url = "https://ast.checkmarx.net/api/scans/"
@@ -90,7 +114,7 @@ def run_scan(region, access_token, project_id, scan_type, handler=None, tags=Non
     return response.json()
 
 def main():
-    parser = argparse.ArgumentParser(description='Pick a random project and attempt a scan if SCM info is present.')
+    parser = argparse.ArgumentParser(description='Pick a random project and attempt a Git scan if SCM info is present.')
     parser.add_argument('--region', required=True, help='API region (e.g., us, eu)')
     parser.add_argument('--tenant_name', required=True, help='Tenant name')
     parser.add_argument('--api_key', required=True, help='API key for authentication')
@@ -110,26 +134,24 @@ def main():
     print(f"Randomly selected project: {project['name']} (ID: {project['id']})")
 
     config = get_project_configuration(region, access_token, project["id"])
-    if config:
-        repo_url = config.get("repoUrl")
-        main_branch = config.get("mainBranch")
-        print(f"  Repo URL: {repo_url}")
-        print(f"  Main Branch: {main_branch}")
-        if repo_url and repo_url.strip() and main_branch and main_branch.strip():
-            handler = {
-                "repoUrl": repo_url.strip(),
-                "branch": main_branch.strip()
-            }
-            try:
-                scan_result = run_scan(region, access_token, project["id"], scan_type="git", handler=handler)
-                print("Scan started successfully!")
-                print(scan_result)
-            except Exception as e:
-                print(f"Failed to start scan: {e}")
-        else:
-            print("No valid repo URL or branch for this project. Cannot run a Git scan.")
+    print("Full project config:", config)  # For debugging; remove/comment after confirming structure
+
+    repo_url, main_branch = extract_repo_info(config)
+    if repo_url and main_branch:
+        print(f"Repo URL: {repo_url}")
+        print(f"Main Branch: {main_branch}")
+        handler = {
+            "repoUrl": repo_url.strip(),
+            "branch": main_branch.strip()
+        }
+        try:
+            scan_result = run_scan(region, access_token, project["id"], scan_type="git", handler=handler)
+            print("Scan started successfully!")
+            print(scan_result)
+        except Exception as e:
+            print(f"Failed to start scan: {e}")
     else:
-        print("No SCM configuration found (likely manual/upload project). Cannot run a Git scan.")
+        print("No valid repository info found in this project config. Cannot run a Git scan.")
 
 if __name__ == "__main__":
     main()
