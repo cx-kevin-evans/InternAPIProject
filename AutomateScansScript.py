@@ -36,7 +36,7 @@ def retrieve_projects(region, accessToken):
     projects = response.json().get("projects")
     return projects
 
-def run_scan(region, access_token, project_id, scan_type="upload", handler=None, tags=None, config=None):
+def run_scan(region, access_token, project_id, scan_type, handler=None, tags=None, config=None):
     if region == "":
         url = "https://ast.checkmarx.net/api/scans/"
     else:
