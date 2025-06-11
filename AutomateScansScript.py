@@ -42,6 +42,7 @@ def get_project_config_params(region, access_token, project_id):
         return []
     if response.status_code != 200:
         raise Exception(f"Failed to get project config params for {project_id}: {response.status_code} {response.text}")
+    print(response.json())
     return response.json()
 
 def extract_repo_info_from_params(params):
