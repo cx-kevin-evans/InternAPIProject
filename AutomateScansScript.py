@@ -36,6 +36,35 @@ def retrieve_projects(region, accessToken):
     projects = response.json().get("projects")
     return projects
 
+def get_project_configuration(region, access_token, project_id):
+    if region == "":
+        url = f"https://ast.checkmarx.net/api/configuration/project/{project_id}"
+    else:
+        url = f"https://{region}.ast.checkmarx.net/api/configuration/project/{project_id}"
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Accept': '*/*; version=1.0'
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        raise Exception(f"Failed to get project configuration: {response.status_code} {response.text}")
+    return response.json()
+
+def filter_git_projects(region, access_token, projects):
+    git_projects = []
+    for p in projects:
+        try:
+            config = get_project_configuration(region, access_token, p["id"])
+            repo_url = config.get("repoUrl")
+            main_branch = config.get("mainBranch")
+            if repo_url and repo_url.strip() and main_branch and main_branch.strip():
+                p["_repoUrl"] = repo_url
+                p["_mainBranch"] = main_branch
+                git_projects.append(p)
+        except Exception as e:
+            print(f"Could not get config for project {p['name']}: {e}")
+    return git_projects
+
 def run_scan(region, access_token, project_id, scan_type, handler=None, tags=None, config=None):
     if region == "":
         url = "https://ast.checkmarx.net/api/scans/"
@@ -81,24 +110,8 @@ def run_scan(region, access_token, project_id, scan_type, handler=None, tags=Non
         raise Exception(f"Failed to start scan: {response.status_code} {response.text}")
     return response.json()
 
-def determine_scan_parameters(project):
-    origin = project.get("origin")
-    repo_url = project.get("repoUrl")
-    main_branch = project.get("mainBranch")
-    print(repo_url, main_branch, origin)
-    if origin and repo_url and main_branch:
-        scan_type = "git"
-        handler = {
-            "repoUrl": repo_url,
-            "branch": main_branch
-        }
-    else:
-        scan_type = "upload"
-        handler = None  # No uploadurl, so cannot scan without a new ZIP
-    return scan_type, handler
-
 def main():
-    parser = argparse.ArgumentParser(description='Performs scan on random project in tenant\'s account')
+    parser = argparse.ArgumentParser(description='Performs scan on random Git-based project in tenant\'s account')
     parser.add_argument('--region', required=True, help='Region for the API endpoint (e.g., us, eu)')
     parser.add_argument('--tenant_name', required=True, help='Tenant name')
     parser.add_argument('--api_key', required=True, help='API key for authentication')
@@ -109,20 +122,19 @@ def main():
 
     accessToken = get_access_token(region, tenantName, apiKey)
     projects = retrieve_projects(region, accessToken)
-    #project = randomize(projects)
-    project = projects[0] 
-    print(project)
-    scan_type, handler = determine_scan_parameters(project)
-    print(scan_type)
-    if scan_type == "GitHub" or scan_type == "GitLab" or scan_type == "Bitbucket":
-        print("Detected Git-based project. Running scan...")
-        scan_result = run_scan(region, accessToken, project["id"], scan_type=scan_type, handler=handler)
-        print("Scan started successfully!")
-        print(scan_result)
-    else:
-        print("Selected project is an upload/manual project.")
-        print("You must upload a new ZIP file to scan this project. Skipping scan.")
-        # Optionally: You could add logic here to prompt for a ZIP and uploadurl if you want to automate that.
+    git_projects = filter_git_projects(region, accessToken, projects)
+    if not git_projects:
+        print("No Git-based projects with valid repo URL and main branch found in your account.")
+        return
+    project = randomize(git_projects)
+    handler = {
+        "repoUrl": project["_repoUrl"],
+        "branch": project["_mainBranch"]
+    }
+    print("Detected Git-based project. Running scan...")
+    scan_result = run_scan(region, accessToken, project["id"], scan_type="git", handler=handler)
+    print("Scan started successfully!")
+    print(scan_result)
 
 if __name__ == "__main__":
     main()
