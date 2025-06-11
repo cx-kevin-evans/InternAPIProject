@@ -31,6 +31,56 @@ def get_user_action():
             print("Invalid input. Please enter 'update' or 'create'.")
     return action
 
+def update_url_and_branch(accessToken, region, projectId, repoUrl, mainBranch):
+    """
+    Updates the repository URL and main branch of an existing project.
+    """
+
+    if region == "":
+        url = "https://ast.checkmarx.net/api/configuration/project"
+    else:
+        url = f"https://{region}.ast.checkmarx.net/api/configuration/project"
+    headers = {
+    "Authorization": f"Bearer {accessToken}",
+    "Accept": "application/json; version=1.0",
+    "Content-Type": "application/json; version=1.0"
+    }
+    params = {
+        "project-id" : projectId
+    }
+    payload = [
+            {
+                "key": "scan.config.microengines.repoUrl",
+                "name": "repoUrl",
+                "category": "microengines",
+                "originLevel": "Project",
+                "value": repoUrl,
+                "valueType": "String",
+                # "valueTypeParams": "string",
+                "allowOverride": True
+            },
+            {
+                "key": "scan.handler.git.branch",
+                "name": "branch",
+                "category": "git",
+                "originLevel": "Project",
+                "value": mainBranch,
+                "valueType": "String",
+                # "valueTypeParams": "string",
+                "allowOverride": True
+            }
+    ]
+    
+
+    # make the request to update the url and branch
+    response = requests.request("PATCH", url, headers=headers, params=params, json=payload)
+    if response.status_code != 204:
+        print(f"Failed to update project URL and branch: {response.text}")
+        print(f"Response status code: {response.status_code}")
+    else:
+        print(f"Project {projectId} updated successfully with new URL: {repoUrl} and main branch: {mainBranch}")
+        
+
 def update_fields(accessToken, region):
     """
     Updates fields in an existing project based on user input.
@@ -49,17 +99,15 @@ def update_fields(accessToken, region):
         url = f"https://ast.checkmarx.net/api/projects/{projectId}"
     else:
         url = f"https://{region}.ast.checkmarx.net/api/projects/{projectId}"
-
     headers = {
     "Authorization": f"Bearer {accessToken}",
     "Accept": "application/json; version=1.0",
     "Content-Type": "application/json; version=1.0"
     }
-
     payload = {
         "name": projectName,
-        "repoUrl": repoUrl,
-        "mainBranch": mainBranch
+        # "repoUrl": repoUrl,
+        # "mainBranch": mainBranch
     }
 
     # make the request to update the project
@@ -71,11 +119,74 @@ def update_fields(accessToken, region):
         print(f"Project {projectName} updated successfully with ID: {projectId}")
         print("You can now run a scan on this project.")
 
+    # test printing: viewing configuration data
+    # get_project_configuration(accessToken, region, projectId)
+    update_url_and_branch(accessToken, region, projectId, repoUrl, mainBranch)
+
 def create_project(accessToken, region):
     """
     Creates a new project based on user input.
     """
-    print("not implemented yet")
+
+    # fetch project data from user
+    print("Please provide the data for the new project.")
+    projectName = input("Project Name: ")
+    repoUrl = input("Repository URL: ")
+    mainBranch = input("Main Branch: ")
+
+    # set up request components
+    if region == "":
+        url = "https://ast.checkmarx.net/api/projects/"
+    else:
+        url = f"https://{region}.ast.checkmarx.net/api/projects/"
+    headers = {
+    "Authorization": f"Bearer {accessToken}",
+    "Accept": "application/json; version=1.0",
+    "Content-Type": "application/json; version=1.0"
+    }
+    payload = {
+        "name": projectName,
+        "repoUrl": repoUrl,
+        "mainBranch": mainBranch
+    }
+
+    # make the request to create the project
+    response = requests.request("POST", url, headers=headers, json=payload)
+    if response.status_code != 201: 
+        print(f"Failed to create project: {response.text}")
+        print(f"Response status code: {response.status_code}")
+    else:
+        projectId = response.json().get("id")
+        print(f"Project {projectName} created successfully with ID: {projectId}")
+        print("You can now run a scan on this project.")
+        update_url_and_branch(accessToken, region, projectId, repoUrl, mainBranch)
+
+def get_project_configuration(accessToken, region, projectId):
+    """
+    Test method to look at project configuration data.
+    """
+    if region == "":
+        url = "https://ast.checkmarx.net/api/configuration/project"
+    else:
+        url = f"https://{region}.ast.checkmarx.net/api/configuration/project"
+    headers = {
+    "Authorization": f"Bearer {accessToken}",
+    "Accept": "application/json; version=1.0",
+    "Content-Type": "application/json; version=1.0"
+    }
+    params = {
+        "project-id" : projectId
+    }
+
+    response = requests.request("GET", url, headers=headers, params=params)
+    if response.status_code != 200:
+        print(f"Failed to retrieve project configuration: {response.text}")
+        print(f"Response status code: {response.status_code}")
+    else:
+        print("Project configuration retrieved successfully.")
+        print("Configuration Data:", response.json())
+
+
 
 def main():
     # Obtain command line arguments
