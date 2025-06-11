@@ -42,7 +42,6 @@ def get_project_config_params(region, access_token, project_id):
         return []
     if response.status_code != 200:
         raise Exception(f"Failed to get project config params for {project_id}: {response.status_code} {response.text}")
-    print(response.json())
     return response.json()
 
 def extract_repo_info_from_params(params):
@@ -97,7 +96,6 @@ def run_scan(region, access_token, project_id, scan_type="git", handler=None, ta
         "tags": tags,
         "config": config
     }
-    print("DEBUG: Scan payload:", scan_payload)
     response = requests.post(url, json=scan_payload, headers=headers)
     if response.status_code not in (200, 201):
         raise Exception(f"Failed to start scan: {response.status_code} {response.text}")
@@ -124,8 +122,6 @@ def main():
 
     params = get_project_config_params(region, access_token, project["id"])
     repo_url, main_branch = extract_repo_info_from_params(params)
-    print(f"Repo URL: {repo_url}")
-    print(f"Main Branch: {main_branch}")
 
     if repo_url and main_branch:
         handler = {
