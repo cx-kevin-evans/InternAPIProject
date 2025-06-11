@@ -113,7 +113,7 @@ def main():
     project = projects[0] 
     print(project)
     scan_type, handler = determine_scan_parameters(project)
-
+    print(scan_type)
     if scan_type == "git":
         print("Detected Git-based project. Running scan...")
         scan_result = run_scan(region, accessToken, project["id"], scan_type=scan_type, handler=handler)
