@@ -109,7 +109,8 @@ def main():
 
     accessToken = get_access_token(region, tenantName, apiKey)
     projects = retrieve_projects(region, accessToken)
-    project = randomize(projects)
+    #project = randomize(projects)
+    project = projects[0] 
     print(project)
     scan_type, handler = determine_scan_parameters(project)
 
