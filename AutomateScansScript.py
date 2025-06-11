@@ -114,7 +114,7 @@ def main():
     print(project)
     scan_type, handler = determine_scan_parameters(project)
     print(scan_type)
-    if scan_type == "git":
+    if scan_type == "GitHub" or scan_type == "GitLab" or scan_type == "Bitbucket":
         print("Detected Git-based project. Running scan...")
         scan_result = run_scan(region, accessToken, project["id"], scan_type=scan_type, handler=handler)
         print("Scan started successfully!")
