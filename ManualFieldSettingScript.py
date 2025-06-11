@@ -31,8 +31,31 @@ def get_user_action():
             print("Invalid input. Please enter 'update' or 'create'.")
     return action
 
-def update_fields():
-    print("not implemented yet")
+def update_fields(accessToken, region):
+    # fetch project ID + update fields
+    projectId = input("Please provide the project ID. ")
+    print("Now please provide the data for the fields you want to update.")
+    projectName = input("Project Name: ")
+    repoUrl = input("Repository URL: ")
+    mainBranch = input("Main Branch: ")
+
+    # set up request components
+    if region == "":
+        url = f"https://ast.checkmarx.net/api/projects/{projectId}"
+    else:
+        url = f"https://{region}.ast.checkmarx.net/api/projects/{projectId}"
+
+    headers = {
+    "Authorization": f"Bearer {accessToken}",
+    "Accept": "application/json; version=1.0",
+    "Content-Type": "application/json; version=1.0"
+    }
+
+    payload = {
+        "name": projectName,
+        "repoUrl": repoUrl,
+        "mainBranch": mainBranch
+    }
 
 def create_project():
     print("not implemented yet")
@@ -54,11 +77,9 @@ def main():
     accessToken = get_access_token(region, tenantName, apiKey)
     action = get_user_action()
     if action == "update":
-        update_fields()
+        update_fields(accessToken, region)
     elif action == "create":
         create_project()
-    else:
-        print("Invalid action selected.")
 
 
 if __name__ == "__main__":
