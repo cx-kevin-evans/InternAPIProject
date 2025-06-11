@@ -2,31 +2,39 @@ import requests
 import argparse
 import random
 
-def get_access_token(region, tenant_name, api_key):
+def get_access_token(region, tenantName, apiKey):
     if region == "":
-        url = f"https://iam.checkmarx.net/auth/realms/{tenant_name}/protocol/openid-connect/token"
+        url = "https://iam.checkmarx.net/auth/realms/" + tenantName + "/protocol/openid-connect/token"
     else:
-        url = f"https://{region}.iam.checkmarx.net/auth/realms/{tenant_name}/protocol/openid-connect/token"
-    payload = f'grant_type=refresh_token&client_id=ast-app&refresh_token={api_key}'
+        url = "https://" + region + ".iam.checkmarx.net/auth/realms/" + tenantName + "/protocol/openid-connect/token"
+    payload = 'grant_type=refresh_token&client_id=ast-app&refresh_token=' + apiKey 
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     response = requests.post(url, headers=headers, data=payload)
     if response.status_code != 200:
         raise Exception(f"Failed to get access token: {response.text}")
     return response.json().get("access_token")
 
-def retrieve_projects(region, access_token):
+def randomize(projects):
+    if not projects:
+        raise Exception("No projects found in the tenant's account.")
+    random_project = random.choice(projects)
+    print(f"Randomly selected project: {random_project['name']} (ID: {random_project['id']})")
+    return random_project
+
+def retrieve_projects(region, accessToken):
     if region == "":
         url = "https://ast.checkmarx.net/api/projects/"
     else:
         url = f"https://{region}.ast.checkmarx.net/api/projects/"
     headers = {
-        'Authorization': f'Bearer {access_token}',
+        'Authorization': f'Bearer {accessToken}',
         'Accept': '*/*; version=1.0'
     }
     response = requests.get(url, headers=headers)
     if response.status_code != 200:
         raise Exception(f"Failed to retrieve projects: {response.text}")
-    return response.json().get("projects", [])
+    projects = response.json().get("projects")
+    return projects
 
 def get_project_configuration(region, access_token, project_id):
     if region == "":
@@ -45,30 +53,21 @@ def get_project_configuration(region, access_token, project_id):
     return response.json()
 
 def extract_repo_info(config):
-    """
-    Extract repo URL and branch from the config object.
-    Adjust this function if your config structure is different.
-    """
     repo_url = None
     main_branch = None
-
-    # Try common locations for repo info
     if not config:
         return None, None
-
-    # Most common (2024/2025): sourceSettings
+    # Try sourceSettings (most common)
     if "sourceSettings" in config:
         repo_url = config["sourceSettings"].get("repositoryUrl")
         main_branch = config["sourceSettings"].get("branch")
-    # Alternate (older): sourceRepository
+    # Try sourceRepository (alternate)
     elif "sourceRepository" in config:
         repo_url = config["sourceRepository"].get("url")
         main_branch = config["sourceRepository"].get("branch")
-    # If you find a different structure, add more logic here
-
     return repo_url, main_branch
 
-def run_scan(region, access_token, project_id, scan_type, handler=None, tags=None, config=None):
+def run_scan(region, access_token, project_id, scan_type="upload", handler=None, tags=None, config=None):
     if region == "":
         url = "https://ast.checkmarx.net/api/scans/"
     else:
@@ -100,58 +99,58 @@ def run_scan(region, access_token, project_id, scan_type, handler=None, tags=Non
                 }
             }
         ]
-    payload = {
+    scan_payload = {
         "project": {"id": project_id},
         "type": scan_type,
         "handler": handler,
         "tags": tags,
         "config": config
     }
-    print("DEBUG: Scan payload:", payload)
-    response = requests.post(url, json=payload, headers=headers)
+    print("DEBUG: Scan payload:", scan_payload)
+    response = requests.post(url, json=scan_payload, headers=headers)
     if response.status_code not in (200, 201):
         raise Exception(f"Failed to start scan: {response.status_code} {response.text}")
     return response.json()
 
+def determine_scan_parameters(region, access_token, project):
+    config = get_project_configuration(region, access_token, project["id"])
+    repo_url, main_branch = extract_repo_info(config)
+    print("Extracted repo info:", repo_url, main_branch)
+    if repo_url and main_branch:
+        scan_type = "git"
+        handler = {
+            "repoUrl": repo_url,
+            "branch": main_branch
+        }
+    else:
+        scan_type = "upload"
+        handler = None  # No uploadurl, so cannot scan without a new ZIP
+    return scan_type, handler
+
 def main():
-    parser = argparse.ArgumentParser(description='Pick a random project and attempt a Git scan if SCM info is present.')
-    parser.add_argument('--region', required=True, help='API region (e.g., us, eu)')
+    parser = argparse.ArgumentParser(description='Performs scan on random project in tenant\'s account')
+    parser.add_argument('--region', required=True, help='Region for the API endpoint (e.g., us, eu)')
     parser.add_argument('--tenant_name', required=True, help='Tenant name')
     parser.add_argument('--api_key', required=True, help='API key for authentication')
     args = parser.parse_args()
-
     region = args.region
-    tenant_name = args.tenant_name
-    api_key = args.api_key
+    tenantName = args.tenant_name
+    apiKey = args.api_key
 
-    access_token = get_access_token(region, tenant_name, api_key)
-    projects = retrieve_projects(region, access_token)
-    if not projects:
-        print("No projects found in tenant account.")
-        return
-
-    project = random.choice(projects)
-    print(f"Randomly selected project: {project['name']} (ID: {project['id']})")
-
-    config = get_project_configuration(region, access_token, project["id"])
-    print("Full project config:", config)  # For debugging; remove/comment after confirming structure
-
-    repo_url, main_branch = extract_repo_info(config)
-    if repo_url and main_branch:
-        print(f"Repo URL: {repo_url}")
-        print(f"Main Branch: {main_branch}")
-        handler = {
-            "repoUrl": repo_url.strip(),
-            "branch": main_branch.strip()
-        }
-        try:
-            scan_result = run_scan(region, access_token, project["id"], scan_type="git", handler=handler)
-            print("Scan started successfully!")
-            print(scan_result)
-        except Exception as e:
-            print(f"Failed to start scan: {e}")
+    accessToken = get_access_token(region, tenantName, apiKey)
+    projects = retrieve_projects(region, accessToken)
+    project = randomize(projects)
+    print("Selected project:", project)
+    scan_type, handler = determine_scan_parameters(region, accessToken, project)
+    print("Scan type:", scan_type)
+    if scan_type == "git":
+        print("Detected Git-based project. Running scan...")
+        scan_result = run_scan(region, accessToken, project["id"], scan_type=scan_type, handler=handler)
+        print("Scan started successfully!")
+        print(scan_result)
     else:
-        print("No valid repository info found in this project config. Cannot run a Git scan.")
+        print("Selected project is an upload/manual project.")
+        print("You must upload a new ZIP file to scan this project. Skipping scan.")
 
 if __name__ == "__main__":
     main()
