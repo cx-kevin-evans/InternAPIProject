@@ -31,6 +31,17 @@ def get_user_action():
             print("Invalid input. Please enter 'update' or 'create'.")
     return action
 
+def get_user_activity():
+    """
+    Prompts the user to continue or exit the script.
+    """
+    active = ""
+    while active not in ["yes", "no"]:
+        active = input("Do you want to update/create another project? (yes/no): ").lower()
+        if active not in ["yes", "no"]:
+            print("Invalid input. Please enter 'yes' or 'no'.")
+    return active
+
 def update_url_and_branch(accessToken, region, projectId, repoUrl, mainBranch):
     """
     Updates the repository URL and main branch of an existing project.
@@ -75,11 +86,9 @@ def update_url_and_branch(accessToken, region, projectId, repoUrl, mainBranch):
     # make the request to update the url and branch
     response = requests.request("PATCH", url, headers=headers, params=params, json=payload)
     if response.status_code != 204:
-        print(f"Failed to update project URL and branch: {response.text}")
-        print(f"Response status code: {response.status_code}")
+        return False
     else:
-        print(f"Project {projectId} updated successfully with new URL: {repoUrl} and main branch: {mainBranch}")
-        
+        return True
 
 def update_fields(accessToken, region):
     """
@@ -106,8 +115,6 @@ def update_fields(accessToken, region):
     }
     payload = {
         "name": projectName,
-        # "repoUrl": repoUrl,
-        # "mainBranch": mainBranch
     }
 
     # make the request to update the project
@@ -116,12 +123,15 @@ def update_fields(accessToken, region):
         print(f"Failed to update project: {response.text}")
         print(f"Response status code: {response.status_code}")
     else:
-        print(f"Project {projectName} updated successfully with ID: {projectId}")
-        print("You can now run a scan on this project.")
+        if update_url_and_branch(accessToken, region, projectId, repoUrl, mainBranch):
+            print(f"Project {projectName} updated successfully with ID: {projectId}")
+            print("You can now run a scan on this project.")
+        else:
+            print(f"Failed to update project URL and branch.")
 
     # test printing: viewing configuration data
     # get_project_configuration(accessToken, region, projectId)
-    update_url_and_branch(accessToken, region, projectId, repoUrl, mainBranch)
+    
 
 def create_project(accessToken, region):
     """
@@ -157,9 +167,12 @@ def create_project(accessToken, region):
         print(f"Response status code: {response.status_code}")
     else:
         projectId = response.json().get("id")
-        print(f"Project {projectName} created successfully with ID: {projectId}")
-        print("You can now run a scan on this project.")
-        update_url_and_branch(accessToken, region, projectId, repoUrl, mainBranch)
+        if update_url_and_branch(accessToken, region, projectId, repoUrl, mainBranch):
+            print(f"Project {projectName} created successfully with ID: {projectId}")
+            print("You can now run a scan on this project.")
+        else:
+            print(f"Failed to update project URL and branch.")
+        
 
 def get_project_configuration(accessToken, region, projectId):
     """
@@ -203,11 +216,14 @@ def main():
 
     # Determine is user wants to update fields or create new project
     accessToken = get_access_token(region, tenantName, apiKey)
-    action = get_user_action()
-    if action == "update":
-        update_fields(accessToken, region)
-    elif action == "create":
-        create_project(accessToken, region)
+    active = "yes"
+    while active == "yes":
+        action = get_user_action()
+        if action == "update":
+            update_fields(accessToken, region)
+        elif action == "create":
+            create_project(accessToken, region)
+        active = get_user_activity()
 
 
 if __name__ == "__main__":
