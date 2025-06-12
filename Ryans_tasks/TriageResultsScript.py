@@ -20,6 +20,39 @@ def get_access_token(region, tenantName, apiKey):
         
     return response.json().get("access_token")
 
+def get_most_recent_scan(accessToken, region, projectName):
+    """
+    Grabs the most recent scan for a given project.
+    """
+
+    # set up request for scan list
+    if region == "":
+        url = "https://ast.checkmarx.net/api/scans/"
+    else:
+        url = f"https://{region}.ast.checkmarx.net/api/scans/"
+    headers = {
+        "Authorization": f"Bearer {accessToken}",
+        "Accept": "application/json; version=1.0",
+        "Content-Type": "application/json; version=1.0"
+    }
+    params = {
+        "field" : ["project-names"],
+        "project-names" : [projectName]
+    }
+
+    response = requests.request("GET", url, headers=headers, params=params)
+
+    print(response.text)
+
+    if response.status_code != 200:
+        print(f"Failed to get scans: {response.text}")
+    else:
+        scanId = response.json()["scans"][0]["id"]
+        # print(f"Most recent scan ID for project '{projectName}': {scanId}")
+        return scanId
+
+    return None
+
 def main():
     # Obtain command line arguments
     parser = argparse.ArgumentParser(description='Export a CxOne scan workflow as a CSV file')
@@ -34,10 +67,12 @@ def main():
     region = args.region
     tenantName = args.tenant_name
     apiKey = args.api_key
+    projectName = args.project_name
 
     # triage scan results
     accessToken = get_access_token(region, tenantName, apiKey)
     # steps: project id -> get scan id (most recent) -> get a results id -> triage results
+    scanId = get_most_recent_scan(accessToken, region, projectName)
 
 if __name__ == "__main__":
     main()
