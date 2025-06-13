@@ -110,7 +110,6 @@ def main():
     parser.add_argument('--tenant_name', required=True, help='Tenant name')
     parser.add_argument('--api_key', required=True, help='API key for authentication')
     parser.add_argument('--project_name', required=True, help='Project name')
-    parser.add_argument('--project_id', required=False, help='Project ID')
 
     # Set up various global variables
     args = parser.parse_args()
@@ -118,13 +117,11 @@ def main():
     tenantName = args.tenant_name
     apiKey = args.api_key
     projectName = args.project_name
-    projectId = args.project_id
 
     # triage scan results
     accessToken = get_access_token(region, tenantName, apiKey)
 
     # steps: 
-    # retrieve project id from user
     # get scan id (most recent)
     # get all engines used in most recent scan
     # get a similarity id for each scan engine
