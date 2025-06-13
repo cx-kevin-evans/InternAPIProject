@@ -114,6 +114,9 @@ def change_sast_predicate(region, access_token, project_id, similarity_id, sever
         'Accept': '*/*; version=1.0',
         'Content-Type': 'application/json'
     }
+    print(project_id)
+    print(similarity_id)
+    print(scan_id)
     params = {
         "similarityId": similarity_id,
         "projectId": project_id,
