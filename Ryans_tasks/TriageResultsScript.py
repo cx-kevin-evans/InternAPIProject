@@ -78,9 +78,10 @@ def get_sast_similarity_ids(region, access_token, scan_id):
     }
     response = requests.get(url, headers=headers)
     data = response.json()
-    results = data.get("results", [])
-    similarity_ids = [r["similarityId"] for r in results if "similarityId" in r]
-    return similarity_ids
+    print(data)
+    #results = data.get("results", [])
+    #similarity_ids = [r["similarityId"] for r in results if "similarityId" in r]
+    #return similarity_ids
 
 
 def main():
@@ -112,7 +113,7 @@ def main():
     # triage results
 
     get_most_recent_scan(accessToken, region, projectName)
-    print(get_sast_similarity_ids(region, accessToken, scanId))
+    get_sast_similarity_ids(region, accessToken, scanId)
 
 if __name__ == "__main__":
     main()
