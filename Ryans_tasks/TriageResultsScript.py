@@ -55,19 +55,34 @@ def get_most_recent_scan(accessToken, region, projectName):
 
 import requests
 
-def get_sast_similarity_ids(region, access_token, project_id, limit=100):
+def get_sast_similarity_ids(region, access_token, scan_id):
+    """
+    Retrieve all similarityId values for SAST results for a given scan.
 
-    if region == "":
-        url = f"https://ast.checkmarx.net/api/sast-results?scan-id={scanId}&project-id={project_id}&limit={limit}"
+    Args:
+        region (str): Region code (e.g., "eu", "us", etc. Use "" or "us" for US/global).
+        access_token (str): JWT access token.
+        scan_id (str): The scan ID.
+        limit (int): Max number of results to fetch (default 100).
+
+    Returns:
+        list of str: List of similarityId values.
+    """
+    if region == "" or region.lower() == "us":
+        url = f"https://ast.checkmarx.net/api/sast-results?scan-id={scan_id}"
     else:
-        url = f"https://{region}.ast.checkmarx.net/api/sast-results?scan-id={scanId}&project-id={project_id}&limit={limit}"
+        url = f"https://{region}.ast.checkmarx.net/api/sast-results?scan-id={scan_id}"
     headers = {
         'Authorization': f'Bearer {access_token}',
         'Accept': '*/*; version=1.0'
     }
-    response = requests.request("GET", url, headers=headers)
-    print(response.text)
-    #return [r["similarityId"] for r in results if "similarityId" in r]
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    data = response.json()
+    results = data.get("results", [])
+    similarity_ids = [r["similarityId"] for r in results if "similarityId" in r]
+    return similarity_ids
+
 
 def main():
     # Obtain command line arguments
@@ -98,7 +113,7 @@ def main():
     # triage results
 
     get_most_recent_scan(accessToken, region, projectName)
-    get_sast_similarity_ids(region, accessToken, projectId)
+    get_sast_similarity_ids(region, accessToken, scanId)
 
 if __name__ == "__main__":
     main()
