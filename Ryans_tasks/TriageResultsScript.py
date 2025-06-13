@@ -55,7 +55,7 @@ def get_most_recent_scan(accessToken, region, projectName):
         scanId = response.json()["scans"][0]["id"]
         print(scanId)
         scanEngines = response.json()["scans"][0]["engines"]
-        project_id = response.json()["project"][0]["id"]
+        project_id = response.json()["projectId"][0]
         return scanId, project_id, scanEngines
 
 def get_iac_similarity_ids(region, access_token, scan_id):
@@ -103,8 +103,6 @@ def get_sast_similarity_ids(region, access_token, scan_id):
         similarity_ids = [r["similarityID"] for r in results if "similarityID" in r]
         print(similarity_ids)
         return similarity_ids
-
-import requests
 
 def change_sast_predicate(region, access_token, project_id, similarity_id, severity, state, scan_id):
     if region == "":
