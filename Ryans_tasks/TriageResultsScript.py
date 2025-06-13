@@ -50,6 +50,7 @@ def get_most_recent_scan(accessToken, region, projectName):
         print(f"Failed to get scans: {response.text}")
     else:
         scanId = response.json()["scans"][0]["id"]
+        print(scanId)
         scanEngines = response.json()["scans"][0]["engines"]
 
 import requests
@@ -64,8 +65,7 @@ def get_sast_similarity_ids(region, access_token, project_id, limit=100):
         'Authorization': f'Bearer {access_token}',
         'Accept': '*/*; version=1.0'
     }
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
+    response = requests.request("GET", url, headers=headers)
     results = response.json().get("results", [])
     print([r["similarityId"] for r in results if "similarityId" in r])
     return [r["similarityId"] for r in results if "similarityId" in r]
