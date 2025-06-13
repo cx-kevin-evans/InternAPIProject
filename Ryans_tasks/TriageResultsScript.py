@@ -49,6 +49,7 @@ def get_most_recent_scan(accessToken, region, projectName):
     if response.status_code != 200:
         print(f"Failed to get scans: {response.text}")
     else:
+        global scanId
         scanId = response.json()["scans"][0]["id"]
         print(scanId)
         scanEngines = response.json()["scans"][0]["engines"]
