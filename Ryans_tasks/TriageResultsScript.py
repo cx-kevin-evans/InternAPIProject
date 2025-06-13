@@ -72,9 +72,11 @@ def get_iac_similarity_ids(region, access_token, scan_id):
     response = requests.request("GET", url, params=params, headers=headers)
     data = response.json()
     print(data)
-    #results = data.get("results", [])
-    #similarity_ids = [r["similarityId"] for r in results if "similarityId" in r]
-    #return similarity_ids
+    results = data.get("results", [])
+    if(results!= []):
+        similarity_ids = [r["similarityId"] for r in results if "similarityId" in r]
+        print(similarity_ids)
+        return similarity_ids
 
 
 def get_sast_similarity_ids(region, access_token, scan_id):
@@ -94,11 +96,11 @@ def get_sast_similarity_ids(region, access_token, scan_id):
     response = requests.request("GET", url, params=params, headers=headers)
     data = response.json()
     print(data)
-    # results = data.get("results", [])
-    # print(results)
-    # similarity_ids = [r["similarityID"] for r in results if "similarityID" in r]
-    # print(similarity_ids)
-    #return similarity_ids
+    results = data.get("results", [])
+    if(results != []):
+        similarity_ids = [r["similarityID"] for r in results if "similarityID" in r]
+        print(similarity_ids)
+        return similarity_ids
 
 
 def main():
