@@ -53,7 +53,6 @@ def get_most_recent_scan(accessToken, region, projectName):
     else:
         global scanId
         scanId = response.json()["scans"][0]["id"]
-        print(scanId)
         scanEngines = response.json()["scans"][0]["engines"]
         project_id = response.json()["scans"][0]["projectId"]
         return scanId, project_id, scanEngines
@@ -67,13 +66,11 @@ def get_iac_similarity_ids(region, access_token, scan_id):
         'Authorization': f'Bearer {access_token}',
         'Accept': 'application/json'
     }
-    print(scan_id)
     params = {
         "scan-id": scan_id
     }
     response = requests.request("GET", url, params=params, headers=headers)
     data = response.json()
-    print(data)
     results = data.get("results", [])
     if(results!= []):
         similarity_ids = [r["similarityId"] for r in results if "similarityId" in r]
@@ -91,7 +88,6 @@ def get_sast_similarity_ids(region, access_token, scan_id):
         'Accept': 'application/json'
 
     }
-    print(scan_id)
     params = {
         "scan-id": scan_id
     }
