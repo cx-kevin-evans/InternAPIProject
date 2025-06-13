@@ -55,7 +55,7 @@ def get_most_recent_scan(accessToken, region, projectName):
         scanId = response.json()["scans"][0]["id"]
         print(scanId)
         scanEngines = response.json()["scans"][0]["engines"]
-        project_id = response.json()["projectId"][0]
+        project_id = response.json()["scans"][0]["projectId"]
         return scanId, project_id, scanEngines
 
 def get_iac_similarity_ids(region, access_token, scan_id):
