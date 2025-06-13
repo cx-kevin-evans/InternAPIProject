@@ -57,9 +57,9 @@ import requests
 def get_sast_similarity_ids(region, access_token, project_id, limit=100):
 
     if region == "":
-        url = f"https://ast.checkmarx.net/api/sast-results?scan-id={scan_id}&project-id={project_id}&limit={limit}"
+        url = f"https://ast.checkmarx.net/api/sast-results?scan-id={scanId}&project-id={project_id}&limit={limit}"
     else:
-        url = f"https://{region}.ast.checkmarx.net/api/sast-results?scan-id={scan_id}&project-id={project_id}&limit={limit}"
+        url = f"https://{region}.ast.checkmarx.net/api/sast-results?scan-id={scanId}&project-id={project_id}&limit={limit}"
     headers = {
         'Authorization': f'Bearer {access_token}',
         'Accept': '*/*; version=1.0'
