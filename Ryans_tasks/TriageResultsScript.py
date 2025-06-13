@@ -50,6 +50,7 @@ def get_most_recent_scan(accessToken, region, projectName):
         print(f"Failed to get scans: {response.text}")
         return None
     else:
+        global scanId
         scanId = response.json()["scans"][0]["id"]
         print(scanId)
         scanEngines = response.json()["scans"][0]["engines"]
@@ -67,6 +68,7 @@ def get_sast_similarity_ids(region, access_token, scan_id):
         'Accept': 'application/json'
 
     }
+    print(scan_id)
     params = {
         "scan-id": scan_id
     }
