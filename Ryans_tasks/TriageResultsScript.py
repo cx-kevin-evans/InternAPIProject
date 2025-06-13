@@ -2,7 +2,8 @@ import requests
 import argparse
 
 scanId = None
-scanEngines = None
+engines = None
+projectId = None
 def get_access_token(region, tenantName, apiKey):
     """
     Generates an access token using the provided API key.
@@ -54,7 +55,8 @@ def get_most_recent_scan(accessToken, region, projectName):
         scanId = response.json()["scans"][0]["id"]
         print(scanId)
         scanEngines = response.json()["scans"][0]["engines"]
-        return scanId
+        project_id = response.json()["project"][0]["id"]
+        return scanId, project_id, scanEngines
 
 def get_iac_similarity_ids(region, access_token, scan_id):
     if region == "":
@@ -95,12 +97,35 @@ def get_sast_similarity_ids(region, access_token, scan_id):
     }
     response = requests.request("GET", url, params=params, headers=headers)
     data = response.json()
-    print(data)
+    #print(data)
     results = data.get("results", [])
     if(results != []):
         similarity_ids = [r["similarityID"] for r in results if "similarityID" in r]
         print(similarity_ids)
         return similarity_ids
+
+import requests
+
+def change_sast_predicate(region, access_token, project_id, similarity_id, severity, state, scan_id):
+    if region == "":
+        url = "https://ast.checkmarx.net/api/sast-results-predicates/"
+    else:
+        url = f"https://{region}.ast.checkmarx.net/api/sast-results-predicates/"
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Accept': '*/*; version=1.0',
+        'Content-Type': 'application/json'
+    }
+    params = {
+        "similarityId": similarity_id,
+        "projectId": project_id,
+        "severity": severity,
+        "state": state,
+        "comment": "changed",
+        "scanId" : scan_id
+    }
+    response = requests.post(url, params=params, headers=headers)
+    return response.json()
 
 
 def main():
@@ -128,9 +153,10 @@ def main():
     # change predicate in each scan engine
     # triage results
 
-    scanId = get_most_recent_scan(accessToken, region, projectName)
-    get_sast_similarity_ids(region, accessToken, scanId)
+    scanId, projectId, engines = get_most_recent_scan(accessToken, region, projectName)
+    sast_similarity = get_sast_similarity_ids(region, accessToken, scanId)
     get_iac_similarity_ids(region, accessToken, scanId)
+    change_sast_predicate(region, accessToken, projectId, sast_similarity , "LOW", "NOT_EXPLOITABLE", scanId)
 
 if __name__ == "__main__":
     main()
