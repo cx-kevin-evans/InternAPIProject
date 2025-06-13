@@ -56,7 +56,26 @@ def get_most_recent_scan(accessToken, region, projectName):
         scanEngines = response.json()["scans"][0]["engines"]
         return scanId
 
-import requests
+def get_iac_similarity_ids(region, access_token, scan_id):
+    if region == "":
+        url = f"https://ast.checkmarx.net/api/kics-results/"
+    else:
+        url = f"https://{region}.ast.checkmarx.net/api/kics-results/"
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Accept': 'application/json'
+    }
+    print(scan_id)
+    params = {
+        "scan-id": scan_id
+    }
+    response = requests.request("GET", url, params=params, headers=headers)
+    data = response.json()
+    print(data)
+    #results = data.get("results", [])
+    #similarity_ids = [r["similarityId"] for r in results if "similarityId" in r]
+    #return similarity_ids
+
 
 def get_sast_similarity_ids(region, access_token, scan_id):
     if region == "":
@@ -112,6 +131,7 @@ def main():
 
     scanId = get_most_recent_scan(accessToken, region, projectName)
     get_sast_similarity_ids(region, accessToken, scanId)
+    get_iac_similarity_ids(region, accessToken, scanId)
 
 if __name__ == "__main__":
     main()
