@@ -68,16 +68,15 @@ def get_sast_similarity_ids(region, access_token, scan_id):
     Returns:
         list of str: List of similarityId values.
     """
-    if region == "" or region.lower() == "us":
-        url = f"https://ast.checkmarx.net/api/sast-results?scan-id={scan_id}"
+    if region == "":
+        url = f"https://ast.checkmarx.net/api/sast-results/"
     else:
-        url = f"https://{region}.ast.checkmarx.net/api/sast-results?scan-id={scan_id}"
+        url = f"https://{region}.ast.checkmarx.net/api/sast-results/"
     headers = {
         'Authorization': f'Bearer {access_token}',
         'Accept': '*/*; version=1.0'
     }
     response = requests.get(url, headers=headers)
-    response.raise_for_status()
     data = response.json()
     results = data.get("results", [])
     similarity_ids = [r["similarityId"] for r in results if "similarityId" in r]
