@@ -76,10 +76,10 @@ def get_sast_similarity_ids(region, access_token, scan_id):
         'Authorization': f'Bearer {access_token}',
         'Accept': '*/*; version=1.0'
     }
-    body = {
+    params = {
         "scan-id": scan_id
     }
-    response = requests.get(url, headers=headers, body=body)
+    response = requests.get(url, params=params, headers=headers)
     data = response.json()
     print(data)
     #results = data.get("results", [])
