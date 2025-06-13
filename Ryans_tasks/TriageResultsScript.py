@@ -112,7 +112,7 @@ def main():
     # triage results
 
     get_most_recent_scan(accessToken, region, projectName)
-    get_sast_similarity_ids(region, accessToken, scanId)
+    print(get_sast_similarity_ids(region, accessToken, scanId))
 
 if __name__ == "__main__":
     main()
