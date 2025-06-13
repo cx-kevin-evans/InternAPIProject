@@ -150,8 +150,8 @@ def main():
     sast_similarity = get_sast_similarity_ids(region, accessToken, scanId)
     get_iac_similarity_ids(region, accessToken, scanId)
     for similarity_id in sast_similarity:
-        similarity_id = similarity_id.replace("-", "")
         similarity_id = str(similarity_id)
+        similarity_id = similarity_id.replace("-", "")
         response = change_sast_predicate(region, accessToken, projectId, similarity_id, "LOW", "NOT_EXPLOITABLE", scanId)
         print(f"Updated predicate for {similarity_id}: {response}")
 
