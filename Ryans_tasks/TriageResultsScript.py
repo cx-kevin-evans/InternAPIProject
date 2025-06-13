@@ -66,8 +66,7 @@ def get_sast_similarity_ids(region, access_token, project_id, limit=100):
         'Accept': '*/*; version=1.0'
     }
     response = requests.request("GET", url, headers=headers)
-    results = response.json().get("results", [])
-    print([r["similarityId"] for r in results if "similarityId" in r])
+    print(response.text)
     return [r["similarityId"] for r in results if "similarityId" in r]
 
 def main():
