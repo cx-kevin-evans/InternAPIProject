@@ -56,25 +56,14 @@ def get_most_recent_scan(accessToken, region, projectName):
 import requests
 
 def get_sast_similarity_ids(region, access_token, scan_id):
-    """
-    Retrieve all similarityId values for SAST results for a given scan.
-
-    Args:
-        region (str): Region code (e.g., "eu", "us", etc. Use "" or "us" for US/global).
-        access_token (str): JWT access token.
-        scan_id (str): The scan ID.
-        limit (int): Max number of results to fetch (default 100).
-
-    Returns:
-        list of str: List of similarityId values.
-    """
     if region == "":
         url = f"https://ast.checkmarx.net/api/sast-results/"
     else:
         url = f"https://{region}.ast.checkmarx.net/api/sast-results/"
     headers = {
         'Authorization': f'Bearer {access_token}',
-        'Accept': '*/*; version=1.0'
+        'Accept': 'application/json'
+
     }
     params = {
         "scan-id": scan_id
