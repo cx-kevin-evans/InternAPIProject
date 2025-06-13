@@ -1,6 +1,8 @@
 import requests
 import argparse
 
+scanId = None
+scanEngines = None
 def get_access_token(region, tenantName, apiKey):
     """
     Generates an access token using the provided API key.
@@ -47,12 +49,26 @@ def get_most_recent_scan(accessToken, region, projectName):
     if response.status_code != 200:
         print(f"Failed to get scans: {response.text}")
     else:
-        scanId = response.json()["scans"][0]
-        print(scanId)
-        # print(f"Most recent scan ID for project '{projectName}': {scanId}")
-        return scanId
+        scanId = response.json()["scans"][0]["id"]
+        scanEngines = response.json()["scans"][0]["engines"]
 
-    return None
+import requests
+
+def get_sast_similarity_ids(region, access_token, project_id, limit=100):
+
+    if region == "":
+        url = f"https://ast.checkmarx.net/api/sast-results?scan-id={scan_id}&project-id={project_id}&limit={limit}"
+    else:
+        url = f"https://{region}.ast.checkmarx.net/api/sast-results?scan-id={scan_id}&project-id={project_id}&limit={limit}"
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Accept': '*/*; version=1.0'
+    }
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
+    results = response.json().get("results", [])
+    print([r["similarityId"] for r in results if "similarityId" in r])
+    return [r["similarityId"] for r in results if "similarityId" in r]
 
 def main():
     # Obtain command line arguments
@@ -60,8 +76,8 @@ def main():
     parser.add_argument('--region', required=True, help='Region for the API endpoint (e.g., us, eu)')
     parser.add_argument('--tenant_name', required=True, help='Tenant name')
     parser.add_argument('--api_key', required=True, help='API key for authentication')
-    # project name OR project id as parameter, whichever is more helpful
     parser.add_argument('--project_name', required=True, help='Project name')
+    parser.add_argument('--project_id', required=False, help='Project ID')
 
     # Set up various global variables
     args = parser.parse_args()
@@ -69,11 +85,21 @@ def main():
     tenantName = args.tenant_name
     apiKey = args.api_key
     projectName = args.project_name
+    projectId = args.project_id
 
     # triage scan results
     accessToken = get_access_token(region, tenantName, apiKey)
-    # steps: project id -> get scan id (most recent) -> get a results id -> triage results
-    scanId = get_most_recent_scan(accessToken, region, projectName)
+
+    # steps: 
+    # retrieve project id from user
+    # get scan id (most recent)
+    # get all engines used in most recent scan
+    # get a similarity id for each scan engine
+    # change predicate in each scan engine
+    # triage results
+
+    get_most_recent_scan(accessToken, region, projectName)
+    get_sast_similarity_ids(region, accessToken, projectId)
 
 if __name__ == "__main__":
     main()
