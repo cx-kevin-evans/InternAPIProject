@@ -114,14 +114,14 @@ def change_sast_predicate(region, access_token, project_id, similarity_id, sever
         'Accept': '*/*; version=1.0',
         'Content-Type': 'application/json'
     }
-    params = {
+    payload = {
         "similarityId": similarity_id,
         "projectId": project_id,
         "severity": severity,
         "state": state,
         "comment": "changed"
         }
-    response = requests.post(url, params=params, headers=headers)
+    response = requests.post(url, json=payload, headers=headers)
     return response.json()
 
 
