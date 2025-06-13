@@ -65,6 +65,7 @@ def get_sast_similarity_ids(region, access_token, scan_id):
         'Accept': 'application/json'
 
     }
+    print(scan_id)
     params = {
         "scan-id": scan_id
     }
