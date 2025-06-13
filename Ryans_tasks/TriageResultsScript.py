@@ -67,7 +67,7 @@ def get_sast_similarity_ids(region, access_token, project_id, limit=100):
     }
     response = requests.request("GET", url, headers=headers)
     print(response.text)
-    //return [r["similarityId"] for r in results if "similarityId" in r]
+    #return [r["similarityId"] for r in results if "similarityId" in r]
 
 def main():
     # Obtain command line arguments
