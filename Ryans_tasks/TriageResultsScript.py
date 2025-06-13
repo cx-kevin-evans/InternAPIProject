@@ -48,10 +48,12 @@ def get_most_recent_scan(accessToken, region, projectName):
 
     if response.status_code != 200:
         print(f"Failed to get scans: {response.text}")
+        return None
     else:
         scanId = response.json()["scans"][0]["id"]
         print(scanId)
         scanEngines = response.json()["scans"][0]["engines"]
+        return scanId
 
 import requests
 
@@ -70,9 +72,11 @@ def get_sast_similarity_ids(region, access_token, scan_id):
     }
     response = requests.request("GET", url, params=params, headers=headers)
     data = response.json()
-    print(data)
-    #results = data.get("results", [])
-    #similarity_ids = [r["similarityId"] for r in results if "similarityId" in r]
+    # print(data)
+    results = data.get("results", [])
+    print(results)
+    similarity_ids = [r["similarityID"] for r in results if "similarityID" in r]
+    print(similarity_ids)
     #return similarity_ids
 
 
@@ -104,7 +108,7 @@ def main():
     # change predicate in each scan engine
     # triage results
 
-    get_most_recent_scan(accessToken, region, projectName)
+    scanId = get_most_recent_scan(accessToken, region, projectName)
     get_sast_similarity_ids(region, accessToken, scanId)
 
 if __name__ == "__main__":
