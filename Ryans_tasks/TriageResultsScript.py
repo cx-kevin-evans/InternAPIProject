@@ -154,7 +154,7 @@ def main():
     scanId, projectId, engines = get_most_recent_scan(accessToken, region, projectName)
     sast_similarity = get_sast_similarity_ids(region, accessToken, scanId)
     get_iac_similarity_ids(region, accessToken, scanId)
-    change_sast_predicate(region, accessToken, projectId, sast_similarity , "LOW", "NOT_EXPLOITABLE", scanId)
+    print(change_sast_predicate(region, accessToken, projectId, sast_similarity , "LOW", "NOT_EXPLOITABLE", scanId))
 
 if __name__ == "__main__":
     main()
