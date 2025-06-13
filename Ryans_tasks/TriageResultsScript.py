@@ -42,12 +42,13 @@ def get_most_recent_scan(accessToken, region, projectName):
 
     response = requests.request("GET", url, headers=headers, params=params)
 
-    print(response.text)
+    #print(response.text)
 
     if response.status_code != 200:
         print(f"Failed to get scans: {response.text}")
     else:
         scanId = response.json()["scans"][0]["id"]
+        print(scanId)
         # print(f"Most recent scan ID for project '{projectName}': {scanId}")
         return scanId
 
