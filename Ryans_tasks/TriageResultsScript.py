@@ -95,7 +95,7 @@ def get_sast_similarity_ids(region, access_token, scan_id):
     data = response.json()
     #print(data)
     results = data.get("results", [])
-    if(results != []):
+    if(results != [] and results != None):
         similarity_ids = [r["similarityID"] for r in results if "similarityID" in r]
         print(similarity_ids)
         return similarity_ids
@@ -149,12 +149,17 @@ def main():
     scanId, projectId, engines = get_most_recent_scan(accessToken, region, projectName)
     sast_similarity = get_sast_similarity_ids(region, accessToken, scanId)
     get_iac_similarity_ids(region, accessToken, scanId)
-    for similarity_id in sast_similarity:
-        similarity_id = str(similarity_id)
-        similarity_id = similarity_id.replace("-", "")
-        print(similarity_id)
-        response = change_sast_predicate(region, accessToken, projectId, similarity_id, "LOW", "NOT_EXPLOITABLE", scanId)
-        print(f"Updated predicate for {similarity_id}: {response.text}")
+    if (sast_similarity != None):
+        for similarity_id in sast_similarity:
+            similarity_id = str(similarity_id)
+            # similarity_id = similarity_id.replace("-", "") # *this line causes change function to have 404 error on negative sim ids
+            print(similarity_id)
+            response = change_sast_predicate(region, accessToken, projectId, similarity_id, "LOW", "NOT_EXPLOITABLE", scanId)
+            if response.status_code == 201: # successful response seems to be 201 and not 204, needs investigation
+                print(f"Predicate for {similarity_id} updated successfully.")
+            else:
+                print(response.status_code)
+                print(f"Error while updating predicate for {similarity_id}: {response.text}")
 
 if __name__ == "__main__":
     main()
