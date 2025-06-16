@@ -118,7 +118,7 @@ def change_sast_predicate(region, access_token, project_id, similarity_id, sever
         "comment": "changed"
         }]
     response = requests.post(url, json=payload, headers=headers)
-    return response.json()
+    return response
 
 
 def main():
@@ -154,7 +154,7 @@ def main():
         similarity_id = similarity_id.replace("-", "")
         print(similarity_id)
         response = change_sast_predicate(region, accessToken, projectId, similarity_id, "LOW", "NOT_EXPLOITABLE", scanId)
-        print(f"Updated predicate for {similarity_id}: {response}")
+        print(f"Updated predicate for {similarity_id}: {response.text}")
 
 if __name__ == "__main__":
     main()
