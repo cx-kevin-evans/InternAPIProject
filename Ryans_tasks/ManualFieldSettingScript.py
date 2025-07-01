@@ -61,24 +61,24 @@ def update_url_and_branch(accessToken, region, projectId, repoUrl, mainBranch):
     }
     payload = [
             {
-                "key": "scan.config.microengines.repoUrl",
-                "name": "repoUrl",
-                "category": "microengines",
-                "originLevel": "Project",
+                "key": "scan.handler.git.repository",
+                # "name": "repoUrl",
+                # "category": "microengines",
+                # "originLevel": "Project",
                 "value": repoUrl,
-                "valueType": "String",
+                # "valueType": "String",
                 # "valueTypeParams": "string",
-                "allowOverride": True
+                # "allowOverride": True
             },
             {
                 "key": "scan.handler.git.branch",
-                "name": "branch",
-                "category": "git",
-                "originLevel": "Project",
+                # "name": "branch",
+                # "category": "git",
+                # "originLevel": "Project",
                 "value": mainBranch,
-                "valueType": "String",
+                # "valueType": "String",
                 # "valueTypeParams": "string",
-                "allowOverride": True
+                # "allowOverride": True
             }
     ]
     
