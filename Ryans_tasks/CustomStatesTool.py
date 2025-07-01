@@ -104,10 +104,67 @@ def get_user_action():
     return action
 
 def get_state_list():
-    print("Not implemented yet")
+    # Get a list of the custom states via API
+    url = f"{base_url}/api/custom-states"
+    headers = {
+        "Authorization": f"Bearer {auth_token}",
+        "Accept": "application/json",
+    }
+    params = {
+        "include-deleted": "true"
+    }
+
+    # make the API call
+    try:
+        response = requests.request("GET", url, headers=headers, params=params)
+
+        if (response.status_code == 200):
+            custom_states = response.json()
+            if not custom_states:
+                print("No custom states found.")
+                return
+            
+            print("Custom States:")
+            for state in custom_states:
+                # print(f"ID: {state['id']}, Name: {state['name']}, Type: {state['type']}, IsAllowed: {state['isAllowed']}")
+                print(state)
+        else:
+            print(f"Response status code: {response.status_code}")
+            if debug:
+                print("url: " + url)
+                print("response text: " + response.text)
+
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred while fetching custom states: {e}")
+        if debug:
+            print("Response status code:", response.status_code)
+        sys.exit(1)
 
 def create_custom_state():
-    print("Not implemented yet")
+    # make a new custom state via API
+    state_name = input("Enter the name of the new custom state: ")
+    url = f"{base_url}/api/custom-states"
+    headers = {
+        "Authorization": f"Bearer {auth_token}",
+        "Accept": "application/json",
+    }
+    payload = {
+        "name": state_name
+    }
+
+    try:
+        response = requests.request("POST", url, headers=headers, json=payload)
+        if response.status_code == 201:
+            print(f"Custom state '{state_name}' created successfully.")
+        else:
+            print(f"Failed to create custom state. Response status code: {response.status_code}")
+            if debug:
+                print("Response text:", response.text)
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred while creating the custom state: {e}")
+        if debug:
+            print("Response status code:", response.status_code)
+        sys.exit(1)
 
 def delete_custom_state():
     print("Not implemented yet")
