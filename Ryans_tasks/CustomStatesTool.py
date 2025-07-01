@@ -81,6 +81,37 @@ def authenticate():
         print(f"An error occurred during authentication: {e}")
         sys.exit(1)
 
+def get_user_activity():
+    """
+    Prompts the user to continue or exit the script.
+    """
+    active = ""
+    while active not in ["yes", "no"]:
+        active = input("Do you want to perform another action? (yes/no): ").lower()
+        if active not in ["yes", "no"]:
+            print("Invalid input. Please enter 'yes' or 'no'.")
+    return active
+
+def get_user_action():
+    """
+    Prompts the user to choose whether an action.
+    """
+    action = ""
+    while action not in ["list", "create", "delete"]:
+        action = input("Do you want to get a list of custom states, create a custom state, or delete a custom state? (list/create/delete): ")
+        if action not in ["list", "create", "delete"]:
+            print("Invalid input. Please enter 'list', 'create', or 'delete'.")
+    return action
+
+def get_state_list():
+    print("Not implemented yet")
+
+def create_custom_state():
+    print("Not implemented yet")
+
+def delete_custom_state():
+    print("Not implemented yet")
+
 def main():
     global base_url
     global tenant_name
@@ -109,10 +140,19 @@ def main():
     auth_url = generate_auth_url()
 
     authenticate()
-    # print(debug)
 
+    # main script logic
+    active = "yes"
+    while active == "yes":
+        action = get_user_action()
+        if action == "list":
+            get_state_list()
+        elif action == "create":
+            create_custom_state()
+        elif action == "delete":
+            delete_custom_state()
+        active = get_user_activity()
 
-    # Add new functionality below 
 
 
 
