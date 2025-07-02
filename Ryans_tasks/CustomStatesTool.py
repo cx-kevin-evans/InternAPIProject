@@ -166,7 +166,28 @@ def create_custom_state():
             print("Response status code:", response.status_code)
         sys.exit(1)
 
-def delete_custom_state():
+def delete_custom_state(state_id):
+    url = f"{base_url}/api/custom-states/{state_id}"
+    headers = {
+        "Authorization": f"Bearer {auth_token}",
+        "Accept": "*/*; version=1.0"
+    }
+
+    try:
+        response = requests.delete(url, headers=headers)
+        if response.status_code == 204:
+            print(f"Custom state with ID '{state_id}' deleted successfully.")
+        elif response.status_code == 404:
+            print(f"Custom state with ID '{state_id}' not found.")
+        else:
+            print(f"Failed to delete custom state. Response status code: {response.status_code}")
+            if debug:
+                print("Response text:", response.text)
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred while deleting the custom state: {e}")
+        if debug:
+            print("Exception details:", e)
+        sys.exit(1)
     print("Not implemented yet")
 
 def main():
@@ -209,10 +230,6 @@ def main():
         elif action == "delete":
             delete_custom_state()
         active = get_user_activity()
-
-
-
-
 
 
 if __name__ == "__main__":
