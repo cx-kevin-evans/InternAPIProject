@@ -105,7 +105,7 @@ def get_user_action():
 
 def get_state_list():
     # Get a list of the custom states via API
-    url = f"{base_url}/api/custom-states"
+    url = f"{base_url}/api/custom-states/"
     headers = {
         "Authorization": f"Bearer {auth_token}",
         "Accept": "application/json",
