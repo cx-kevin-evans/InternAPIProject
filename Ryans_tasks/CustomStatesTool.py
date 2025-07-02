@@ -139,7 +139,7 @@ def get_state_list():
 def create_custom_state():
     # make a new custom state via API
     state_name = input("Enter the name of the new custom state: ")
-    url = f"{base_url}/api/custom-states/"
+    url = f"https://us.ast.checkmarx.net/api/custom-states/"
     headers = {
         "Authorization": f"Bearer {auth_token}",
         "Accept": "application/json; version=1.0",  # Fixed: Added version=1.0
