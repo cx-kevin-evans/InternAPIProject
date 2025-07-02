@@ -137,12 +137,12 @@ def get_state_list():
         sys.exit(1)
 
 def create_custom_state():
-    # make a new custom state via API    
+    # make a new custom state via API
     state_name = input("Enter the name of the new custom state: ")
     url = f"{base_url}/api/custom-states/"
     headers = {
         "Authorization": f"Bearer {auth_token}",
-        "Accept": "application/json; version=1.0",
+        "Accept": "application/json; version=1.0",  # Fixed: Added version=1.0
         "Content-Type": "application/json"
     }
     payload = {
@@ -151,33 +151,27 @@ def create_custom_state():
 
     try:
         response = requests.post(url, headers=headers, json=payload)
-        print(f"Status Code: {response.status_code}")
-        print(f"Raw Response: '{response.text}'")
         
-        # Check if response is successful
+        # Check for successful creation (201) or other success codes
         if response.status_code in [200, 201]:
-            print(f"✓ Custom state '{state_name}' created successfully!")
-            
-            # Only try to parse JSON if there's content
-            if response.text.strip():
-                try:
-                    result = response.json()
-                    print("Response data:", result)
-                except:
-                    print("(Response was not JSON)")
+            print(f"Custom state '{state_name}' created successfully.")
+            # Print the response if it contains useful info
+            try:
+                result = response.json()
+                if result:
+                    print("Response:", result)
+            except:
+                pass
         else:
-            print(f"✗ Failed to create custom state. Status: {response.status_code}")
-            
-            # Try to parse error response
-            if response.text.strip():
-                try:
-                    error_data = response.json()
-                    print("Error details:", error_data)
-                except:
-                    print("Error response (not JSON):", response.text)
-            
-    except Exception as e:
-        print(f"Request error: {e}")
+            print(f"Failed to create custom state. Response status code: {response.status_code}")
+            print("Response text:", response.text)
+            if debug:
+                print(f"URL: {url}")
+                print(f"Headers: {headers}")
+                print(f"Payload: {payload}")
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred while creating the custom state: {e}")
+        sys.exit(1)
 
 def delete_custom_state(state_id):
     url = f"{base_url}/api/custom-states/{state_id}"
