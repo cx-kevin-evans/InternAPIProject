@@ -136,10 +136,102 @@ def get_state_list():
             print("Response status code:", response.status_code)
         sys.exit(1)
 
+
+def debug_custom_state_creation():
+    """Comprehensive debugging for the custom state creation API"""
+    
+    print("=== DEBUGGING CUSTOM STATE CREATION ===")
+    
+    # 1. First, let's verify the GET endpoint works
+    print("\n1. Testing GET endpoint first...")
+    get_url = f"{base_url}/api/custom-states/"
+    headers = {
+        "Authorization": f"Bearer {auth_token}",
+        "Accept": "application/json; version=1.0"
+    }
+    
+    try:
+        get_response = requests.get(get_url, headers=headers)
+        print(f"GET Status: {get_response.status_code}")
+        if get_response.status_code == 200:
+            print("✓ GET endpoint works - API base URL and auth are correct")
+        else:
+            print(f"✗ GET endpoint failed: {get_response.text}")
+            return
+    except Exception as e:
+        print(f"✗ GET request failed: {e}")
+        return
+    
+    # 2. Debug the exact URL being constructed
+    print(f"\n2. URL Construction Debug:")
+    print(f"base_url: '{base_url}'")
+    print(f"Full GET URL: '{get_url}'")
+    
+    # 3. Try different POST URL variations
+    print(f"\n3. Testing POST URL variations...")
+    
+    post_urls = [
+        f"{base_url}/api/custom-states",      # No trailing slash
+        f"{base_url}/api/custom-states/",     # With trailing slash
+        f"{base_url}/api/custom-states/create", # Explicit create endpoint
+    ]
+    
+    payload = {"name": "debug-test"}
+    post_headers = {
+        "Authorization": f"Bearer {auth_token}",
+        "Accept": "application/json; version=1.0",
+        "Content-Type": "application/json"
+    }
+    
+    for url in post_urls:
+        print(f"\nTrying POST to: {url}")
+        try:
+            response = requests.post(url, headers=post_headers, json=payload)
+            print(f"  Status: {response.status_code}")
+            print(f"  Response: {response.text[:150]}...")
+            
+            if response.status_code != 404:
+                print(f"  *** NON-404 RESPONSE FOUND! ***")
+                
+        except Exception as e:
+            print(f"  Error: {e}")
+    
+    # 4. Check if it's a permissions issue by examining response headers
+    print(f"\n4. Detailed POST attempt analysis...")
+    url = f"{base_url}/api/custom-states/"
+    
+    try:
+        response = requests.post(url, headers=post_headers, json=payload)
+        print(f"Status Code: {response.status_code}")
+        print(f"Response Headers: {dict(response.headers)}")
+        print(f"Response Body: {response.text}")
+        
+        # Check if server returned any helpful headers
+        if 'Allow' in response.headers:
+            print(f"Allowed Methods: {response.headers['Allow']}")
+        if 'WWW-Authenticate' in response.headers:
+            print(f"Auth Issue: {response.headers['WWW-Authenticate']}")
+            
+    except Exception as e:
+        print(f"Error: {e}")
+    
+    # 5. Test with OPTIONS to see what methods are allowed
+    print(f"\n5. Testing OPTIONS request...")
+    try:
+        options_response = requests.options(url, headers={"Authorization": f"Bearer {auth_token}"})
+        print(f"OPTIONS Status: {options_response.status_code}")
+        print(f"OPTIONS Headers: {dict(options_response.headers)}")
+        if 'Allow' in options_response.headers:
+            print(f"Allowed Methods: {options_response.headers['Allow']}")
+    except Exception as e:
+        print(f"OPTIONS Error: {e}")
+    
+    print(f"\n=== DEBUG COMPLETE ===")
+
 def create_custom_state():
     # make a new custom state via API
     state_name = input("Enter the name of the new custom state: ")
-    url = f"https://us.ast.checkmarx.net/api/custom-states/"
+    url = f"{base_url}/api/custom-states/"
     headers = {
         "Authorization": f"Bearer {auth_token}",
         "Accept": "application/json; version=1.0",  # Fixed: Added version=1.0
@@ -233,7 +325,8 @@ def main():
         if action == "list":
             get_state_list()
         elif action == "create":
-            create_custom_state()
+            debug_custom_state_creation() 
+            #create_custom_state()
         elif action == "delete":
             delete_custom_state()
         active = get_user_activity()
