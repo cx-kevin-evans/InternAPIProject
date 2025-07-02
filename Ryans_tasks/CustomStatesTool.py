@@ -110,13 +110,10 @@ def get_state_list():
         "Authorization": f"Bearer {auth_token}",
         "Accept": "application/json",
     }
-    params = {
-        "include-deleted": "true"
-    }
 
     # make the API call
     try:
-        response = requests.request("GET", url, headers=headers, params=params)
+        response = requests.request("GET", url, headers=headers)
 
         if (response.status_code == 200):
             custom_states = response.json()
