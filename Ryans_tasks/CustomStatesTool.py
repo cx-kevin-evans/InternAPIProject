@@ -139,31 +139,39 @@ def get_state_list():
 def create_custom_state():
     # make a new custom state via API
     state_name = input("Enter the name of the new custom state: ")
-    url = f"{base_url}/api/custom-states/"  # Added trailing slash
+    url = f"{base_url}/api/custom-states/"
     headers = {
         "Authorization": f"Bearer {auth_token}",
-        "Accept": "application/json; version=1.0",  # Added version
-        "Content-Type": "application/json"  # Added Content-Type
+        "Accept": "application/json; version=1.0",  # Fixed: Added version=1.0
+        "Content-Type": "application/json"
     }
     payload = {
         "name": state_name
     }
 
     try:
-        response = requests.post(url, headers=headers, json=payload)  # Use requests.post directly
-        if response.status_code == 201:
+        response = requests.post(url, headers=headers, json=payload)
+        
+        # Check for successful creation (201) or other success codes
+        if response.status_code in [200, 201]:
             print(f"Custom state '{state_name}' created successfully.")
+            # Print the response if it contains useful info
+            try:
+                result = response.json()
+                if result:
+                    print("Response:", result)
+            except:
+                pass
         else:
             print(f"Failed to create custom state. Response status code: {response.status_code}")
             print("Response text:", response.text)
-            if debug:
-                print(f"URL: {url}")
-                print(f"Headers: {headers}")
-                print(f"Payload: {payload}")
+            print(f"URL: {url}")
+            print(f"Headers: {headers}")
+            print(f"Payload: {payload}")
     except requests.exceptions.RequestException as e:
         print(f"An error occurred while creating the custom state: {e}")
         sys.exit(1)
-        
+
 def delete_custom_state(state_id):
     url = f"{base_url}/api/custom-states/{state_id}"
     headers = {
