@@ -108,7 +108,7 @@ def get_state_list():
     url = f"{base_url}/api/custom-states/"
     headers = {
         "Authorization": f"Bearer {auth_token}",
-        "Accept": "application/json",
+        "Accept": "application/json; version=1.0",
     }
 
     # make the API call
