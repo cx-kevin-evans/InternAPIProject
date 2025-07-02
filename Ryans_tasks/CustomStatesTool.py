@@ -154,8 +154,7 @@ def create_custom_state():
             print(f"Custom state '{state_name}' created successfully.")
         else:
             print(f"Failed to create custom state. Response status code: {response.status_code}")
-            if debug:
-                print("Response text:", response.text)
+            print("Response text:", response.text)
     except requests.exceptions.RequestException as e:
         print(f"An error occurred while creating the custom state: {e}")
         if debug:
