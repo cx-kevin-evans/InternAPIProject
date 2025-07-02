@@ -165,9 +165,10 @@ def create_custom_state():
         else:
             print(f"Failed to create custom state. Response status code: {response.status_code}")
             print("Response text:", response.text)
-            print(f"URL: {url}")
-            print(f"Headers: {headers}")
-            print(f"Payload: {payload}")
+            if debug:
+                print(f"URL: {url}")
+                print(f"Headers: {headers}")
+                print(f"Payload: {payload}")
     except requests.exceptions.RequestException as e:
         print(f"An error occurred while creating the custom state: {e}")
         sys.exit(1)
