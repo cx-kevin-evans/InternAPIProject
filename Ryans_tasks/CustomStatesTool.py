@@ -177,26 +177,30 @@ def delete_custom_state(state_id):
     url = f"{base_url}/api/custom-states/{state_id}"
     headers = {
         "Authorization": f"Bearer {auth_token}",
-        "Accept": "*/*; version=1.0"
+        "Accept": "application/json; version=1.0"  # Fixed: Changed from "*/*" to "application/json"
     }
 
     try:
         response = requests.delete(url, headers=headers)
-        if response.status_code == 204:
+        
+        # Check for successful deletion
+        if response.status_code in [200, 204]:  # Added 200 as possible success code
             print(f"Custom state with ID '{state_id}' deleted successfully.")
         elif response.status_code == 404:
             print(f"Custom state with ID '{state_id}' not found.")
         else:
             print(f"Failed to delete custom state. Response status code: {response.status_code}")
+            print("Response text:", response.text)  # Always show response text for errors
             if debug:
-                print("Response text:", response.text)
+                print(f"URL: {url}")
+                print(f"Headers: {headers}")
+                
     except requests.exceptions.RequestException as e:
         print(f"An error occurred while deleting the custom state: {e}")
         if debug:
             print("Exception details:", e)
         sys.exit(1)
-    print("Not implemented yet")
-
+    
 def main():
     global base_url
     global tenant_name
