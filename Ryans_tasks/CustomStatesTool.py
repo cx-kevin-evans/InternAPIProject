@@ -212,6 +212,8 @@ def main():
     parser.add_argument('--iam_base_url', required=False, help='Region IAM Base URL')
     parser.add_argument('--tenant_name', required=True, help='Tenant name')
     parser.add_argument('--api_key', required=True, help='API key for authentication')
+    parser.add_argument('--action', required=True, help='List, create, or delete a custom state')
+    parser.add_argument('--state_id', required=False, help='ID of the custom state to delete')
     parser.add_argument('--debug', action='store_true', help='Enable debug output')
 
     # Set up various global variables
@@ -227,16 +229,13 @@ def main():
     authenticate()
 
     # main script logic
-    active = "yes"
-    while active == "yes":
-        action = get_user_action()
-        if action == "list":
-            get_state_list()
-        elif action == "create":
-            create_custom_state()
-        elif action == "delete":
-            delete_custom_state()
-        active = get_user_activity()
+    action = args.action
+    if action == "list":
+        get_state_list()
+    elif action == "create":
+        create_custom_state()
+    elif action == "delete":
+        delete_custom_state(args.state_id)
 
 
 if __name__ == "__main__":
