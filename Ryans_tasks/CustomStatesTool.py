@@ -136,9 +136,8 @@ def get_state_list():
             print("Response status code:", response.status_code)
         sys.exit(1)
 
-def create_custom_state():
+def create_custom_state(state_name):
     # make a new custom state via API
-    state_name = input("Enter the name of the new custom state: ")
     url = f"{base_url}/api/custom-states/"
     headers = {
         "Authorization": f"Bearer {auth_token}",
@@ -218,6 +217,7 @@ def main():
     parser.add_argument('--api_key', required=True, help='API key for authentication')
     parser.add_argument('--action', required=True, help='List, create, or delete a custom state')
     parser.add_argument('--state_id', required=False, help='ID of the custom state to delete')
+    parser.add_argument('--state_name', required=False, help='Name of the custom state to create')
     parser.add_argument('--debug', action='store_true', help='Enable debug output')
 
     # Set up various global variables
@@ -237,7 +237,7 @@ def main():
     if action == "list":
         get_state_list()
     elif action == "create":
-        create_custom_state()
+        create_custom_state(args.state_name)
     elif action == "delete":
         delete_custom_state(args.state_id)
 
